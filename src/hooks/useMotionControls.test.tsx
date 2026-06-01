@@ -13,17 +13,24 @@ function sendOrientation(beta: number, gamma = 0) {
 
 function calibrate(
   result: { current: ReturnType<typeof useMotionControls> },
-  samples = [79, 80, 81],
+  samples: Array<[number, number]> = [
+    [89, 0],
+    [90, 0],
+    [91, 0],
+  ],
 ) {
   act(() => result.current.startCalibration());
-  samples.forEach((beta) => act(() => sendOrientation(beta)));
+  samples.forEach(([beta, gamma]) => act(() => sendOrientation(beta, gamma)));
   act(() => result.current.finishCalibration());
 }
 
-function holdTilt(beta: number) {
-  act(() => sendOrientation(beta));
-  act(() => vi.advanceTimersByTime(141));
-  act(() => sendOrientation(beta));
+function sendSteadyTilt(beta: number, gamma = 0, sampleCount = 24) {
+  for (let index = 0; index < sampleCount; index += 1) {
+    act(() => {
+      sendOrientation(beta, gamma);
+      vi.advanceTimersByTime(20);
+    });
+  }
 }
 
 describe("useMotionControls", () => {
@@ -44,10 +51,11 @@ describe("useMotionControls", () => {
     vi.useRealTimers();
   });
 
-  it("normalizes portrait and landscape axis values", () => {
-    expect(normalizeTiltAxis(40, 15, 0)).toBe(40);
-    expect(normalizeTiltAxis(40, 15, 90)).toBe(-15);
-    expect(normalizeTiltAxis(40, 15, -90)).toBe(15);
+  it("measures the screen face elevation through landscape Euler flips", () => {
+    expect(normalizeTiltAxis(90, 0)).toBeCloseTo(0);
+    expect(normalizeTiltAxis(0, 90)).toBeCloseTo(0);
+    expect(normalizeTiltAxis(0, 40)).toBeCloseTo(50);
+    expect(normalizeTiltAxis(180, 40)).toBeCloseTo(-50);
   });
 
   it("detects the larger movement made while placing the phone on a forehead", async () => {
@@ -77,11 +85,11 @@ describe("useMotionControls", () => {
       await result.current.requestPermission();
     });
     calibrate(result);
-    expect(result.current.baseline?.axisValue).toBe(80);
+    expect(result.current.baseline?.axisValue).toBeCloseTo(0);
 
-    act(() => sendOrientation(105));
-    act(() => vi.advanceTimersByTime(200));
-    act(() => sendOrientation(105));
+    sendSteadyTilt(65);
+    act(() => sendOrientation(20));
+    sendSteadyTilt(90, 0, 12);
     expect(result.current.lastAction).toBeNull();
   });
 
@@ -94,15 +102,37 @@ describe("useMotionControls", () => {
       await result.current.requestPermission();
     });
     calibrate(result);
-    holdTilt(130);
+    sendSteadyTilt(140);
     expect(result.current.lastAction).toMatchObject({ id: 1, outcome: "correct" });
 
-    holdTilt(135);
+    sendSteadyTilt(145);
     expect(result.current.lastAction).toMatchObject({ id: 1 });
 
-    act(() => sendOrientation(80));
-    act(() => vi.advanceTimersByTime(1001));
-    holdTilt(25);
+    sendSteadyTilt(90, 0, 12);
+    act(() => vi.advanceTimersByTime(1101));
+    sendSteadyTilt(40);
+    expect(result.current.lastAction).toMatchObject({ id: 2, outcome: "pass" });
+  });
+
+  it("distinguishes down and up tilts from a landscape forehead posture", async () => {
+    const { result } = renderHook(() =>
+      useMotionControls({ enabled: true, reverseTilt: false }),
+    );
+
+    await act(async () => {
+      await result.current.requestPermission();
+    });
+    calibrate(result, [
+      [0, 89],
+      [0, 90],
+      [0, 89],
+    ]);
+    sendSteadyTilt(180, 40);
+    expect(result.current.lastAction).toMatchObject({ id: 1, outcome: "correct" });
+
+    sendSteadyTilt(0, 90, 12);
+    act(() => vi.advanceTimersByTime(1101));
+    sendSteadyTilt(0, 40);
     expect(result.current.lastAction).toMatchObject({ id: 2, outcome: "pass" });
   });
 
@@ -115,7 +145,7 @@ describe("useMotionControls", () => {
       await result.current.requestPermission();
     });
     calibrate(result);
-    holdTilt(130);
+    sendSteadyTilt(140);
 
     expect(result.current.lastAction).toMatchObject({ outcome: "pass" });
   });

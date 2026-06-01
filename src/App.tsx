@@ -29,7 +29,7 @@ type Screen =
   | "editor"
   | "how-to-play";
 
-const DEFAULT_THRESHOLD = 45;
+const DEFAULT_THRESHOLD = 40;
 type RoundStartDestination = "forehead-setup" | "countdown";
 
 function App() {

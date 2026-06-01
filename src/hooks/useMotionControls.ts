@@ -16,6 +16,8 @@ interface UseMotionControlsOptions {
   threshold?: number;
   cooldownMs?: number;
   gestureHoldMs?: number;
+  gestureSampleCount?: number;
+  smoothingFactor?: number;
   foreheadMovementThreshold?: number;
 }
 
@@ -31,26 +33,21 @@ function getMotionConstructor(): PermissionAwareEventConstructor | undefined {
     | undefined;
 }
 
-function getScreenAngle(): number {
-  const orientationAngle = window.screen.orientation?.angle;
-  if (typeof orientationAngle === "number") {
-    return orientationAngle;
-  }
-
-  const legacyAngle = (window as Window & { orientation?: number }).orientation;
-  return typeof legacyAngle === "number" ? legacyAngle : 0;
+function degreesToRadians(value: number): number {
+  return (value * Math.PI) / 180;
 }
 
-export function normalizeTiltAxis(beta: number, gamma: number, angle = getScreenAngle()): number {
-  if (angle === 90 || angle === -270) {
-    return -gamma;
-  }
+function radiansToDegrees(value: number): number {
+  return (value * 180) / Math.PI;
+}
 
-  if (angle === -90 || angle === 270) {
-    return gamma;
-  }
+export function normalizeTiltAxis(beta: number, gamma: number): number {
+  const screenNormalZ =
+    Math.cos(degreesToRadians(beta)) * Math.cos(degreesToRadians(gamma));
 
-  return beta;
+  // The screen face's elevation is stable even when the Euler angles flip near
+  // the landscape forehead posture. Positive faces upward; negative faces down.
+  return radiansToDegrees(Math.asin(Math.max(-1, Math.min(1, screenNormalZ))));
 }
 
 function averageSamples(samples: OrientationSample[]): OrientationSample {
@@ -67,16 +64,23 @@ function averageSamples(samples: OrientationSample[]): OrientationSample {
   return {
     beta,
     gamma,
-    axisValue: normalizeTiltAxis(beta, gamma),
+    axisValue:
+      samples.reduce((sum, sample) => sum + sample.axisValue, 0) / samples.length,
   };
+}
+
+function smoothTilt(previous: number | null, next: number, factor: number): number {
+  return previous === null ? next : previous + (next - previous) * factor;
 }
 
 export function useMotionControls({
   enabled,
   reverseTilt,
-  threshold = 45,
-  cooldownMs = 1000,
-  gestureHoldMs = 140,
+  threshold = 40,
+  cooldownMs = 1100,
+  gestureHoldMs = 220,
+  gestureSampleCount = 4,
+  smoothingFactor = 0.2,
   foreheadMovementThreshold = 35,
 }: UseMotionControlsOptions) {
   const supportsOrientation =
@@ -102,9 +106,11 @@ export function useMotionControls({
   const foreheadDetectionActiveRef = useRef(false);
   const calibratingRef = useRef(false);
   const calibrationSamplesRef = useRef<OrientationSample[]>([]);
+  const filteredAxisRef = useRef<number | null>(null);
   const pendingGestureRef = useRef<{
     outcome: TiltAction["outcome"];
     startedAt: number;
+    sampleCount: number;
   } | null>(null);
   const reverseTiltRef = useRef(reverseTilt);
   const actionIdRef = useRef(0);
@@ -141,6 +147,7 @@ export function useMotionControls({
     setForeheadMovementDetected(false);
     calibratingRef.current = false;
     calibrationSamplesRef.current = [];
+    filteredAxisRef.current = null;
     pendingGestureRef.current = null;
     armedRef.current = true;
   }, []);
@@ -215,6 +222,7 @@ export function useMotionControls({
     setBaseline(null);
     calibrationSamplesRef.current = [];
     calibratingRef.current = true;
+    filteredAxisRef.current = null;
     pendingGestureRef.current = null;
     armedRef.current = true;
     setStatus("calibrating");
@@ -236,6 +244,7 @@ export function useMotionControls({
     baselineRef.current = calibratedBaseline;
     setBaseline(calibratedBaseline);
     calibrationSamplesRef.current = [];
+    filteredAxisRef.current = calibratedBaseline.axisValue;
     pendingGestureRef.current = null;
     armedRef.current = true;
     setStatus("calibrated");
@@ -253,11 +262,20 @@ export function useMotionControls({
         return;
       }
 
-      const sample: OrientationSample = {
+      const rawSample: OrientationSample = {
         beta: event.beta,
         gamma: event.gamma,
         axisValue: normalizeTiltAxis(event.beta, event.gamma),
       };
+      const sample: OrientationSample = {
+        ...rawSample,
+        axisValue: smoothTilt(
+          filteredAxisRef.current,
+          rawSample.axisValue,
+          smoothingFactor,
+        ),
+      };
+      filteredAxisRef.current = sample.axisValue;
       currentSampleRef.current = sample;
       setCurrentSample(sample);
 
@@ -282,7 +300,7 @@ export function useMotionControls({
       }
 
       if (calibratingRef.current) {
-        calibrationSamplesRef.current.push(sample);
+        calibrationSamplesRef.current.push(rawSample);
         if (calibrationSamplesRef.current.length > 180) {
           calibrationSamplesRef.current.shift();
         }
@@ -296,7 +314,7 @@ export function useMotionControls({
       }
 
       const delta = sample.axisValue - calibratedBaseline.axisValue;
-      if (Math.abs(delta) <= Math.max(8, threshold * 0.25)) {
+      if (Math.abs(delta) <= Math.max(10, threshold * 0.3)) {
         armedRef.current = true;
         pendingGestureRef.current = null;
         return;
@@ -312,7 +330,7 @@ export function useMotionControls({
         return;
       }
 
-      const isDownTilt = delta > 0;
+      const isDownTilt = delta < 0;
       const outcome: TiltAction["outcome"] = reverseTiltRef.current
         ? isDownTilt
           ? "pass"
@@ -322,11 +340,15 @@ export function useMotionControls({
           : "pass";
       const pendingGesture = pendingGestureRef.current;
       if (!pendingGesture || pendingGesture.outcome !== outcome) {
-        pendingGestureRef.current = { outcome, startedAt: now };
+        pendingGestureRef.current = { outcome, startedAt: now, sampleCount: 1 };
         return;
       }
+      pendingGesture.sampleCount += 1;
 
-      if (now - pendingGesture.startedAt < gestureHoldMs) {
+      if (
+        now - pendingGesture.startedAt < gestureHoldMs ||
+        pendingGesture.sampleCount < gestureSampleCount
+      ) {
         return;
       }
 
@@ -347,7 +369,9 @@ export function useMotionControls({
     enabled,
     foreheadMovementThreshold,
     gestureHoldMs,
+    gestureSampleCount,
     permission,
+    smoothingFactor,
     threshold,
   ]);
 
