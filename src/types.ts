@@ -51,6 +51,8 @@ export type MotionStatus =
   | "off"
   | "permission-needed"
   | "ready"
+  | "waiting-for-forehead"
+  | "calibrating"
   | "waiting-for-sample"
   | "calibrated"
   | "unavailable"

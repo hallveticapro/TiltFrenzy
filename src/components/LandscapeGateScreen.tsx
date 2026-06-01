@@ -25,6 +25,10 @@ export function LandscapeGateScreen({ onCancel }: LandscapeGateScreenProps) {
           <p>
             The wider view makes the word easier for teammates to read from across the room.
           </p>
+          <p className="notice notice--warning rotate-card__notice">
+            Screen not rotating? Disable Portrait Orientation Lock on iPhone or turn on
+            Auto-rotate on Android, then turn the phone sideways again.
+          </p>
         </div>
       </section>
     </ScreenLayout>

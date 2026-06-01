@@ -22,7 +22,8 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
           <li>Turn the phone sideways and hold it where your teammates can see the word.</li>
           <li>Your teammates give clues without saying the word or any part of it.</li>
           <li>Guess the word from their clues. Do not look at the screen.</li>
-          <li>Tilt backward/up for Correct or forward/down to Pass.</li>
+          <li>Tap Start Round, place the phone on your forehead, and hold still for 3, 2, 1.</li>
+          <li>Tilt down for Correct or up to Pass, then return to the starting position.</li>
           <li>Use the large buttons any time motion is unavailable or inconvenient.</li>
         </ol>
         <p>

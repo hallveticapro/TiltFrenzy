@@ -139,7 +139,8 @@ kbd {
 .hero-panel,
 .panel,
 .deck-card,
-.calibration-card,
+.countdown-card,
+.forehead-card,
 .score-card {
   border: 2px solid #d5e4df;
   border-radius: 1.35rem;
@@ -325,7 +326,8 @@ kbd {
   background: #fff2d5;
 }
 
-.calibration-card,
+.countdown-card,
+.forehead-card,
 .score-card {
   display: grid;
   min-height: 18rem;
@@ -334,18 +336,75 @@ kbd {
   text-align: center;
 }
 
-.calibration-card strong,
+.countdown-card strong,
 .score-card strong {
   color: #00778d;
   font-size: clamp(7rem, 42vw, 14rem);
   line-height: 0.85;
 }
 
-.calibration-card p,
+.countdown-card p,
 .score-card p,
 .score-card small {
   margin: 1rem 0 0;
   font-weight: 800;
+}
+
+.countdown-screen,
+.forehead-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+
+.countdown-screen__cancel,
+.forehead-screen__cancel {
+  position: fixed;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+}
+
+.countdown-card,
+.forehead-card {
+  display: grid;
+  min-height: min(72vh, 24rem);
+  width: min(100%, 42rem);
+  place-items: center;
+  align-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.countdown-card small,
+.forehead-card p {
+  margin: 0;
+  color: #5a6d75;
+  font-weight: 800;
+}
+
+.forehead-card h1 {
+  margin: 0;
+}
+
+.forehead-card__phone {
+  display: grid;
+  width: 9rem;
+  height: 5.2rem;
+  place-items: center;
+  border: 0.45rem solid #17324d;
+  border-radius: 1.1rem;
+  background: #e1f5ef;
+}
+
+.forehead-card__phone span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #00778d;
+  transform: translateX(-3.35rem);
 }
 
 .game-screen {

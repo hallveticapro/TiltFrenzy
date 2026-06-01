@@ -27,21 +27,26 @@ optional: the large Correct and Pass buttons and keyboard shortcuts work without
 
 Motion access normally requires HTTPS outside of local development. iOS Safari also requires
 the permission request to happen directly after a user taps a button. That is why TiltFrenzy
-requests access from **Enable Motion & Calibrate** instead of asking on page load.
+requests access after **Start Round** is tapped instead of asking on page load.
 
-During calibration, hold the phone in a comfortable starting position for three seconds.
-Afterward, tilt backward/up for Correct and forward/down for Pass. The directions can be
-reversed in round setup. Tilt back to the neutral position between cards so one movement does
+After permission is granted, move the phone to your forehead. TiltFrenzy notices the larger
+movement, shows **Ready?**, and silently calibrates while counting down from three. During the
+round, make a deliberate tilt down for Correct or up to Pass. The directions can be reversed
+in round setup. Return the phone to its starting position between cards so one movement does
 not score multiple cards.
+
+Browsers do not expose whether the phone's system rotation-lock toggle is enabled. TiltFrenzy
+can detect that the viewport is still portrait and remind the player to disable Portrait
+Orientation Lock on iPhone or enable Auto-rotate on Android before the round starts.
 
 ### Troubleshooting tilt
 
 - Use the Correct and Pass buttons if a browser reports that motion is unavailable.
 - Serve the production build over HTTPS when testing on a phone.
-- On iOS Safari, reload the page and tap **Enable Motion & Calibrate** again if no prompt appears.
+- On iOS Safari, reload the page and tap **Start Round** again if no prompt appears.
 - Check browser or device privacy settings if permission was denied.
 - Try reversing the tilt directions if the device orientation feels opposite to expectations.
-- Hold the phone steady during the three-second calibration countdown.
+- Hold the phone against your forehead and steady during the three-second countdown.
 
 ## Keyboard controls
 

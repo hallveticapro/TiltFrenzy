@@ -1,15 +1,12 @@
-import type { Deck, MotionStatus, RoundSettings } from "../types";
-import { MotionPermissionButton } from "./MotionPermissionButton";
+import type { Deck, RoundSettings } from "../types";
 import { ScreenLayout } from "./ScreenLayout";
 
 interface RoundSetupScreenProps {
   deck: Deck;
   settings: RoundSettings;
-  motionStatus: MotionStatus;
   motionError: string | null;
   onSettingsChange: (settings: RoundSettings) => void;
-  onEnableMotion: () => void;
-  onStartWithoutMotion: () => void;
+  onStartRound: () => void;
   onChooseDeck: () => void;
 }
 
@@ -18,11 +15,9 @@ const durations: RoundSettings["durationSeconds"][] = [30, 60, 90, 120];
 export function RoundSetupScreen({
   deck,
   settings,
-  motionStatus,
   motionError,
   onSettingsChange,
-  onEnableMotion,
-  onStartWithoutMotion,
+  onStartRound,
   onChooseDeck,
 }: RoundSetupScreenProps) {
   const update = (partial: Partial<RoundSettings>) =>
@@ -75,7 +70,7 @@ export function RoundSetupScreen({
           <label className="toggle-row">
             <span>
               <strong>Reverse tilt directions</strong>
-              <small>Forward/down becomes Correct and backward/up becomes Pass.</small>
+              <small>Down becomes Pass and up becomes Correct.</small>
             </span>
             <input
               aria-label="Reverse tilt directions"
@@ -86,18 +81,15 @@ export function RoundSetupScreen({
           </label>
         )}
         {motionError && <p className="notice notice--warning">{motionError}</p>}
-        <div className="button-row">
-          {settings.motionEnabled && (
-            <MotionPermissionButton status={motionStatus} onEnable={onEnableMotion} />
-          )}
-          <button
-            className={`button ${settings.motionEnabled ? "button--secondary" : "button--primary"}`}
-            type="button"
-            onClick={onStartWithoutMotion}
-          >
-            {settings.motionEnabled ? "Start with Buttons" : "Start Round"}
-          </button>
-        </div>
+        {settings.motionEnabled && (
+          <p className="muted motion-start-note">
+            Motion access will be requested when you start. During play, tilt down for Correct
+            and up to Pass.
+          </p>
+        )}
+        <button className="button button--primary button--large" type="button" onClick={onStartRound}>
+          Start Round
+        </button>
       </section>
     </ScreenLayout>
   );

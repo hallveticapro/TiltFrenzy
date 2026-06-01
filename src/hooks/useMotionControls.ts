@@ -15,6 +15,8 @@ interface UseMotionControlsOptions {
   reverseTilt: boolean;
   threshold?: number;
   cooldownMs?: number;
+  gestureHoldMs?: number;
+  foreheadMovementThreshold?: number;
 }
 
 function getOrientationConstructor(): PermissionAwareEventConstructor | undefined {
@@ -51,11 +53,31 @@ export function normalizeTiltAxis(beta: number, gamma: number, angle = getScreen
   return beta;
 }
 
+function averageSamples(samples: OrientationSample[]): OrientationSample {
+  const total = samples.reduce(
+    (accumulator, sample) => ({
+      beta: accumulator.beta + sample.beta,
+      gamma: accumulator.gamma + sample.gamma,
+    }),
+    { beta: 0, gamma: 0 },
+  );
+  const beta = total.beta / samples.length;
+  const gamma = total.gamma / samples.length;
+
+  return {
+    beta,
+    gamma,
+    axisValue: normalizeTiltAxis(beta, gamma),
+  };
+}
+
 export function useMotionControls({
   enabled,
   reverseTilt,
-  threshold = 25,
-  cooldownMs = 900,
+  threshold = 45,
+  cooldownMs = 1000,
+  gestureHoldMs = 140,
+  foreheadMovementThreshold = 35,
 }: UseMotionControlsOptions) {
   const supportsOrientation =
     typeof window !== "undefined" && "DeviceOrientationEvent" in window;
@@ -71,10 +93,19 @@ export function useMotionControls({
   );
   const [currentSample, setCurrentSample] = useState<OrientationSample | null>(null);
   const [baseline, setBaseline] = useState<OrientationSample | null>(null);
+  const [foreheadMovementDetected, setForeheadMovementDetected] = useState(false);
   const [lastAction, setLastAction] = useState<TiltAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const currentSampleRef = useRef<OrientationSample | null>(null);
   const baselineRef = useRef<OrientationSample | null>(null);
+  const foreheadAnchorRef = useRef<OrientationSample | null>(null);
+  const foreheadDetectionActiveRef = useRef(false);
+  const calibratingRef = useRef(false);
+  const calibrationSamplesRef = useRef<OrientationSample[]>([]);
+  const pendingGestureRef = useRef<{
+    outcome: TiltAction["outcome"];
+    startedAt: number;
+  } | null>(null);
   const reverseTiltRef = useRef(reverseTilt);
   const actionIdRef = useRef(0);
   const lastTriggeredAtRef = useRef(Number.NEGATIVE_INFINITY);
@@ -105,6 +136,12 @@ export function useMotionControls({
   const resetCalibration = useCallback(() => {
     baselineRef.current = null;
     setBaseline(null);
+    foreheadAnchorRef.current = null;
+    foreheadDetectionActiveRef.current = false;
+    setForeheadMovementDetected(false);
+    calibratingRef.current = false;
+    calibrationSamplesRef.current = [];
+    pendingGestureRef.current = null;
     armedRef.current = true;
   }, []);
 
@@ -112,6 +149,7 @@ export function useMotionControls({
     setLastAction(null);
     actionIdRef.current = 0;
     lastTriggeredAtRef.current = Number.NEGATIVE_INFINITY;
+    pendingGestureRef.current = null;
     armedRef.current = true;
   }, []);
 
@@ -164,16 +202,41 @@ export function useMotionControls({
     }
   }, [enabled]);
 
-  const calibrate = useCallback((): boolean => {
-    const sample = currentSampleRef.current;
-    if (!sample) {
+  const beginForeheadSetup = useCallback(() => {
+    resetCalibration();
+    foreheadAnchorRef.current = currentSampleRef.current;
+    foreheadDetectionActiveRef.current = true;
+    setStatus("waiting-for-forehead");
+    setError(null);
+  }, [resetCalibration]);
+
+  const startCalibration = useCallback(() => {
+    baselineRef.current = null;
+    setBaseline(null);
+    calibrationSamplesRef.current = [];
+    calibratingRef.current = true;
+    pendingGestureRef.current = null;
+    armedRef.current = true;
+    setStatus("calibrating");
+    setError(null);
+  }, []);
+
+  const finishCalibration = useCallback((): boolean => {
+    calibratingRef.current = false;
+    const samples = calibrationSamplesRef.current;
+    const fallbackSample = currentSampleRef.current;
+    if (samples.length === 0 && !fallbackSample) {
       setStatus("waiting-for-sample");
       setError("No tilt sample arrived. Continue with touch controls or try motion again.");
       return false;
     }
 
-    baselineRef.current = sample;
-    setBaseline(sample);
+    const calibratedBaseline =
+      samples.length > 0 ? averageSamples(samples) : (fallbackSample as OrientationSample);
+    baselineRef.current = calibratedBaseline;
+    setBaseline(calibratedBaseline);
+    calibrationSamplesRef.current = [];
+    pendingGestureRef.current = null;
     armedRef.current = true;
     setStatus("calibrated");
     setError(null);
@@ -198,6 +261,34 @@ export function useMotionControls({
       currentSampleRef.current = sample;
       setCurrentSample(sample);
 
+      if (foreheadDetectionActiveRef.current) {
+        const anchor = foreheadAnchorRef.current;
+        if (!anchor) {
+          foreheadAnchorRef.current = sample;
+          return;
+        }
+
+        const movement = Math.max(
+          Math.abs(sample.beta - anchor.beta),
+          Math.abs(sample.gamma - anchor.gamma),
+          Math.abs(sample.axisValue - anchor.axisValue),
+        );
+        if (movement >= foreheadMovementThreshold) {
+          foreheadDetectionActiveRef.current = false;
+          setForeheadMovementDetected(true);
+          setStatus("ready");
+        }
+        return;
+      }
+
+      if (calibratingRef.current) {
+        calibrationSamplesRef.current.push(sample);
+        if (calibrationSamplesRef.current.length > 180) {
+          calibrationSamplesRef.current.shift();
+        }
+        return;
+      }
+
       const calibratedBaseline = baselineRef.current;
       if (!calibratedBaseline) {
         setStatus("ready");
@@ -205,8 +296,9 @@ export function useMotionControls({
       }
 
       const delta = sample.axisValue - calibratedBaseline.axisValue;
-      if (Math.abs(delta) <= threshold * 0.45) {
+      if (Math.abs(delta) <= Math.max(8, threshold * 0.25)) {
         armedRef.current = true;
+        pendingGestureRef.current = null;
         return;
       }
 
@@ -216,33 +308,61 @@ export function useMotionControls({
         now - lastTriggeredAtRef.current < cooldownMs ||
         Math.abs(delta) < threshold
       ) {
+        pendingGestureRef.current = null;
         return;
       }
 
-      const isForwardTilt = delta > 0;
-      const shouldPass = reverseTiltRef.current ? !isForwardTilt : isForwardTilt;
+      const isDownTilt = delta > 0;
+      const outcome: TiltAction["outcome"] = reverseTiltRef.current
+        ? isDownTilt
+          ? "pass"
+          : "correct"
+        : isDownTilt
+          ? "correct"
+          : "pass";
+      const pendingGesture = pendingGestureRef.current;
+      if (!pendingGesture || pendingGesture.outcome !== outcome) {
+        pendingGestureRef.current = { outcome, startedAt: now };
+        return;
+      }
+
+      if (now - pendingGesture.startedAt < gestureHoldMs) {
+        return;
+      }
+
       actionIdRef.current += 1;
       lastTriggeredAtRef.current = now;
       armedRef.current = false;
+      pendingGestureRef.current = null;
       setLastAction({
         id: actionIdRef.current,
-        outcome: shouldPass ? "pass" : "correct",
+        outcome,
       });
     };
 
     window.addEventListener("deviceorientation", handleOrientation);
     return () => window.removeEventListener("deviceorientation", handleOrientation);
-  }, [cooldownMs, enabled, permission, threshold]);
+  }, [
+    cooldownMs,
+    enabled,
+    foreheadMovementThreshold,
+    gestureHoldMs,
+    permission,
+    threshold,
+  ]);
 
   return {
     permission,
     status,
     currentSample,
     baseline,
+    foreheadMovementDetected,
     lastAction,
     error,
     requestPermission,
-    calibrate,
+    beginForeheadSetup,
+    startCalibration,
+    finishCalibration,
     resetCalibration,
     resetActions,
   };

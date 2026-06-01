@@ -11,6 +11,21 @@ function sendOrientation(beta: number, gamma = 0) {
   window.dispatchEvent(event);
 }
 
+function calibrate(
+  result: { current: ReturnType<typeof useMotionControls> },
+  samples = [79, 80, 81],
+) {
+  act(() => result.current.startCalibration());
+  samples.forEach((beta) => act(() => sendOrientation(beta)));
+  act(() => result.current.finishCalibration());
+}
+
+function holdTilt(beta: number) {
+  act(() => sendOrientation(beta));
+  act(() => vi.advanceTimersByTime(141));
+  act(() => sendOrientation(beta));
+}
+
 describe("useMotionControls", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -18,6 +33,10 @@ describe("useMotionControls", () => {
     Object.defineProperty(window, "DeviceOrientationEvent", {
       configurable: true,
       value: class DeviceOrientationEvent {},
+    });
+    Object.defineProperty(window, "DeviceMotionEvent", {
+      configurable: true,
+      value: class DeviceMotionEvent {},
     });
   });
 
@@ -31,7 +50,7 @@ describe("useMotionControls", () => {
     expect(normalizeTiltAxis(40, 15, -90)).toBe(15);
   });
 
-  it("triggers one correct action until neutral rearming and cooldown pass", async () => {
+  it("detects the larger movement made while placing the phone on a forehead", async () => {
     const { result } = renderHook(() =>
       useMotionControls({ enabled: true, reverseTilt: false }),
     );
@@ -39,17 +58,51 @@ describe("useMotionControls", () => {
     await act(async () => {
       await result.current.requestPermission();
     });
-    act(() => sendOrientation(80));
-    act(() => result.current.calibrate());
-    act(() => sendOrientation(45));
+    act(() => result.current.beginForeheadSetup());
+    act(() => sendOrientation(10));
+    act(() => sendOrientation(30));
+    expect(result.current.foreheadMovementDetected).toBe(false);
+
+    act(() => sendOrientation(50));
+    expect(result.current.foreheadMovementDetected).toBe(true);
+    expect(result.current.status).toBe("ready");
+  });
+
+  it("averages calibration samples and ignores hand twitches", async () => {
+    const { result } = renderHook(() =>
+      useMotionControls({ enabled: true, reverseTilt: false }),
+    );
+
+    await act(async () => {
+      await result.current.requestPermission();
+    });
+    calibrate(result);
+    expect(result.current.baseline?.axisValue).toBe(80);
+
+    act(() => sendOrientation(105));
+    act(() => vi.advanceTimersByTime(200));
+    act(() => sendOrientation(105));
+    expect(result.current.lastAction).toBeNull();
+  });
+
+  it("requires a deliberate tilt and neutral rearming before the next action", async () => {
+    const { result } = renderHook(() =>
+      useMotionControls({ enabled: true, reverseTilt: false }),
+    );
+
+    await act(async () => {
+      await result.current.requestPermission();
+    });
+    calibrate(result);
+    holdTilt(130);
     expect(result.current.lastAction).toMatchObject({ id: 1, outcome: "correct" });
 
-    act(() => sendOrientation(40));
+    holdTilt(135);
     expect(result.current.lastAction).toMatchObject({ id: 1 });
 
     act(() => sendOrientation(80));
-    act(() => vi.advanceTimersByTime(901));
-    act(() => sendOrientation(110));
+    act(() => vi.advanceTimersByTime(1001));
+    holdTilt(25);
     expect(result.current.lastAction).toMatchObject({ id: 2, outcome: "pass" });
   });
 
@@ -61,9 +114,8 @@ describe("useMotionControls", () => {
     await act(async () => {
       await result.current.requestPermission();
     });
-    act(() => sendOrientation(80));
-    act(() => result.current.calibrate());
-    act(() => sendOrientation(45));
+    calibrate(result);
+    holdTilt(130);
 
     expect(result.current.lastAction).toMatchObject({ outcome: "pass" });
   });

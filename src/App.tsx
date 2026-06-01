@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalibrationScreen } from "./components/CalibrationScreen";
+import { CountdownScreen } from "./components/CountdownScreen";
 import { DeckEditor } from "./components/DeckEditor";
 import { DeckSelectScreen } from "./components/DeckSelectScreen";
 import { EndRoundScreen } from "./components/EndRoundScreen";
+import { ForeheadSetupScreen } from "./components/ForeheadSetupScreen";
 import { GameScreen } from "./components/GameScreen";
 import { HomeScreen } from "./components/HomeScreen";
 import { HowToPlayScreen } from "./components/HowToPlayScreen";
@@ -11,6 +12,7 @@ import { RoundSetupScreen } from "./components/RoundSetupScreen";
 import { builtInDecks } from "./data/builtInDecks";
 import { useLandscapeOrientation } from "./hooks/useLandscapeOrientation";
 import { useMotionControls } from "./hooks/useMotionControls";
+import { primeAudio } from "./services/audio";
 import { loadCustomDecks } from "./services/deckStorage";
 import { loadReverseTilt, saveReverseTilt } from "./services/preferences";
 import type { Deck, RoundResult, RoundSettings } from "./types";
@@ -20,14 +22,15 @@ type Screen =
   | "decks"
   | "setup"
   | "landscape-gate"
-  | "calibration"
+  | "forehead-setup"
+  | "countdown"
   | "game"
   | "results"
   | "editor"
   | "how-to-play";
 
-const DEFAULT_THRESHOLD = 25;
-type RoundStartDestination = "calibration" | "game";
+const DEFAULT_THRESHOLD = 45;
+type RoundStartDestination = "forehead-setup" | "countdown";
 
 function App() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -68,14 +71,29 @@ function App() {
 
   const continueToRound = useCallback(
     (destination: RoundStartDestination) => {
-      if (destination === "calibration") {
-        setScreen("calibration");
+      if (destination === "forehead-setup") {
+        motion.beginForeheadSetup();
+        setScreen("forehead-setup");
       } else {
-        startGame();
+        if (settings.motionEnabled && motion.permission === "granted") {
+          motion.startCalibration();
+        }
+        setScreen("countdown");
       }
     },
-    [startGame],
+    [motion.beginForeheadSetup, motion.permission, motion.startCalibration, settings.motionEnabled],
   );
+  const beginCountdown = useCallback(() => continueToRound("countdown"), [continueToRound]);
+  const cancelPreGame = useCallback(() => {
+    motion.resetCalibration();
+    setScreen("setup");
+  }, [motion.resetCalibration]);
+  const finishCountdown = useCallback(() => {
+    if (settings.motionEnabled && motion.permission === "granted") {
+      motion.finishCalibration();
+    }
+    startGame();
+  }, [motion.finishCalibration, motion.permission, settings.motionEnabled, startGame]);
 
   const startWhenLandscape = useCallback(
     (destination: RoundStartDestination, cancelScreen: Screen) => {
@@ -100,17 +118,21 @@ function App() {
     continueToRound(destination);
   }, [continueToRound, isPortrait, pendingStart, screen]);
 
-  const enableMotion = async () => {
+  const startRound = async () => {
+    primeAudio();
+    setRoundResult(null);
     motion.resetCalibration();
-    const granted = await motion.requestPermission();
-    if (granted) {
-      startWhenLandscape("calibration", "setup");
-    }
-  };
 
-  const startWithoutMotion = () => {
-    updateSettings({ ...settings, motionEnabled: false });
-    startWhenLandscape("game", "setup");
+    if (!settings.motionEnabled) {
+      startWhenLandscape("countdown", "setup");
+      return;
+    }
+
+    const granted =
+      motion.permission === "granted" ? true : await motion.requestPermission();
+    if (granted) {
+      startWhenLandscape("forehead-setup", "setup");
+    }
   };
 
   const chooseDeck = (deckId: string) => {
@@ -123,10 +145,10 @@ function App() {
     setRoundResult(null);
     if (settings.motionEnabled && motion.permission === "granted") {
       motion.resetCalibration();
-      startWhenLandscape("calibration", "results");
+      startWhenLandscape("forehead-setup", "results");
       return;
     }
-    startWhenLandscape("game", "results");
+    startWhenLandscape("countdown", "results");
   };
 
   if (screen === "home") {
@@ -160,11 +182,9 @@ function App() {
       <RoundSetupScreen
         deck={selectedDeck}
         settings={settings}
-        motionStatus={motion.status}
         motionError={motion.error}
         onSettingsChange={updateSettings}
-        onEnableMotion={enableMotion}
-        onStartWithoutMotion={startWithoutMotion}
+        onStartRound={startRound}
         onChooseDeck={() => setScreen("decks")}
       />
     );
@@ -174,6 +194,7 @@ function App() {
     return (
       <LandscapeGateScreen
         onCancel={() => {
+          motion.resetCalibration();
           setScreen(pendingStart?.cancelScreen ?? "setup");
           setPendingStart(null);
         }}
@@ -181,12 +202,21 @@ function App() {
     );
   }
 
-  if (screen === "calibration") {
+  if (screen === "forehead-setup") {
     return (
-      <CalibrationScreen
-        onCalibrate={motion.calibrate}
-        onComplete={startGame}
-        onCancel={() => setScreen("setup")}
+      <ForeheadSetupScreen
+        movementDetected={motion.foreheadMovementDetected}
+        onReady={beginCountdown}
+        onCancel={cancelPreGame}
+      />
+    );
+  }
+
+  if (screen === "countdown") {
+    return (
+      <CountdownScreen
+        onComplete={finishCountdown}
+        onCancel={cancelPreGame}
       />
     );
   }
