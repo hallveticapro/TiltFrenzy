@@ -13,6 +13,7 @@ import type { Deck } from "../types";
 const sampleDeck: Deck = {
   id: "deck-1",
   name: "Review",
+  category: "Science",
   cards: [{ id: "card-1", prompt: "A push or a pull", answer: "Force" }],
 };
 

@@ -174,6 +174,13 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                     onChange={(event) => updateSelectedDeck({ name: event.target.value })}
                   />
                 </label>
+                <label>
+                  <span className="field-label">Optional category</span>
+                  <input
+                    value={selectedDeck.category ?? ""}
+                    onChange={(event) => updateSelectedDeck({ category: event.target.value })}
+                  />
+                </label>
                 <div className="button-row">
                   <button className="button button--secondary" type="button" onClick={() => downloadJson(selectedDeck)}>
                     Export JSON

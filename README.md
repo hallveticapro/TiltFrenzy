@@ -5,6 +5,10 @@ holds up a phone in landscape mode while teammates describe the visible word wit
 the word or any part of it. The phone holder guesses, then tilts the phone to mark the card
 Correct or Pass. Always-available touch controls work as a fallback.
 
+The built-in library includes more than 70 decks organized into browseable categories such
+as Education, Animals, Disney, Theme Parks, Movies & TV, Music, Heroes & Sci-Fi, Sports &
+Games, Places & Travel, Food & Everyday, and Just for Fun.
+
 ## Run locally
 
 ```bash
@@ -61,8 +65,8 @@ Orientation Lock on iPhone or enable Auto-rotate on Android before the round sta
 
 Use **Create/Edit Decks** to make decks stored in browser LocalStorage. Built-in decks are
 read-only, but each can be copied into an editable custom deck. Prompts can be pasted one per
-line. Each prompt is the target word teammates describe; custom cards can also include an
-optional hint. Full decks can be exported and imported as JSON.
+line. Each prompt is the target word teammates describe; custom decks can include a category
+and custom cards can include an optional hint. Full decks can be exported and imported as JSON.
 
 ## Deploy
 

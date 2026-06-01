@@ -1,4 +1,5 @@
 import type { Card, Deck, Difficulty } from "../types";
+import { expandedDeckSeeds } from "./expandedDeckSeeds";
 
 type SeedCard = Omit<Card, "id">;
 
@@ -17,10 +18,30 @@ function word(
   return { prompt, category, difficulty };
 }
 
+function makePromptDeck({
+  id,
+  name,
+  category,
+  prompts,
+}: (typeof expandedDeckSeeds)[number]): Deck {
+  return {
+    id,
+    name,
+    category,
+    description: `Give clues for these ${name.toLowerCase()} without saying the answer.`,
+    builtIn: true,
+    cards: makeCards(
+      id,
+      prompts.map((prompt) => word(prompt, name, "easy")),
+    ),
+  };
+}
+
 export const builtInDecks: Deck[] = [
   {
     id: "math-review",
     name: "4th Grade Math Review",
+    category: "Education",
     description: "Describe math terms without saying the word on the card.",
     builtIn: true,
     cards: makeCards("math", [
@@ -53,6 +74,7 @@ export const builtInDecks: Deck[] = [
   {
     id: "science-review",
     name: "4th Grade Science Review",
+    category: "Education",
     description: "Give clues for science words without using the term itself.",
     builtIn: true,
     cards: makeCards("science", [
@@ -85,6 +107,7 @@ export const builtInDecks: Deck[] = [
   {
     id: "classroom-fun",
     name: "Fun/Classroom Safe",
+    category: "Just for Fun",
     description: "Quick, silly words for party-style clue rounds.",
     builtIn: true,
     cards: makeCards("fun", [
@@ -119,6 +142,7 @@ export const builtInDecks: Deck[] = [
   {
     id: "vocabulary",
     name: "Vocabulary",
+    category: "Education",
     description: "Describe grade-appropriate words without saying them.",
     builtIn: true,
     cards: makeCards("vocab", [
@@ -148,4 +172,5 @@ export const builtInDecks: Deck[] = [
       word("Conclusion", "Academic vocabulary"),
     ]),
   },
+  ...expandedDeckSeeds.map(makePromptDeck),
 ];

@@ -12,6 +12,7 @@ export interface Deck {
   id: string;
   name: string;
   description?: string;
+  category?: string;
   builtIn?: boolean;
   cards: Card[];
 }

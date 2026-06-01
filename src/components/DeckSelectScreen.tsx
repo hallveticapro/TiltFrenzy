@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import type { Deck } from "../types";
 import { ScreenLayout } from "./ScreenLayout";
 
@@ -12,13 +13,15 @@ interface DeckSelectScreenProps {
 function DeckCard({ deck, onSelect }: { deck: Deck; onSelect: (id: string) => void }) {
   return (
     <button className="deck-card" type="button" onClick={() => onSelect(deck.id)}>
-      <span className="deck-card__type">{deck.builtIn ? "Built-in deck" : "Custom deck"}</span>
+      <span className="deck-card__type">{deck.builtIn ? deck.category ?? "Built-in deck" : "Custom deck"}</span>
       <strong>{deck.name}</strong>
       <span>{deck.description ?? `${deck.cards.length} cards ready to play.`}</span>
       <small>{deck.cards.length} cards</small>
     </button>
   );
 }
+
+const ALL_CATEGORIES = "All";
 
 export function DeckSelectScreen({
   builtInDecks,
@@ -27,6 +30,19 @@ export function DeckSelectScreen({
   onBack,
   onEditDecks,
 }: DeckSelectScreenProps) {
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Set(builtInDecks.map((deck) => deck.category).filter((category): category is string => Boolean(category))),
+      ),
+    [builtInDecks],
+  );
+  const [selectedCategory, setSelectedCategory] = useState(() => categories[0] ?? ALL_CATEGORIES);
+  const visibleBuiltInDecks =
+    selectedCategory === ALL_CATEGORIES
+      ? builtInDecks
+      : builtInDecks.filter((deck) => deck.category === selectedCategory);
+
   return (
     <ScreenLayout
       title="Choose a Deck"
@@ -37,8 +53,24 @@ export function DeckSelectScreen({
         </button>
       }
     >
+      <nav className="deck-categories" aria-label="Deck categories">
+        {[ALL_CATEGORIES, ...categories].map((category) => (
+          <button
+            className={selectedCategory === category ? "is-selected" : ""}
+            key={category}
+            type="button"
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </nav>
+      <div className="section-heading">
+        <h2>{selectedCategory === ALL_CATEGORIES ? "All built-in decks" : selectedCategory}</h2>
+        <span className="muted">{visibleBuiltInDecks.length} decks</span>
+      </div>
       <section className="deck-grid" aria-label="Built-in decks">
-        {builtInDecks.map((deck) => (
+        {visibleBuiltInDecks.map((deck) => (
           <DeckCard key={deck.id} deck={deck} onSelect={onSelect} />
         ))}
       </section>

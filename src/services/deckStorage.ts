@@ -58,6 +58,7 @@ export function validateDeck(value: unknown): Deck {
     id: cleanOptionalString(value.id) ?? createId("deck"),
     name: value.name.trim(),
     description: cleanOptionalString(value.description),
+    category: cleanOptionalString(value.category),
     builtIn: false,
     cards,
   };
