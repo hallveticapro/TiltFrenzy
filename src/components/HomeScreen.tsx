@@ -8,7 +8,7 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onPlay, onEditDecks, onHowToPlay }: HomeScreenProps) {
   return (
-    <ScreenLayout title="TiltFrenzy" eyebrow="Team clues, quick guesses">
+    <ScreenLayout title="Tilted" eyebrow="Team clues, quick guesses">
       <section className="hero-panel">
         <div className="hero-panel__burst" aria-hidden="true">
           TF

@@ -1,6 +1,6 @@
-# TiltFrenzy
+# Tilted
 
-TiltFrenzy is a mobile-first, classroom-friendly team guessing game for browsers. One player
+Tilted is a mobile-first, classroom-friendly team guessing game for browsers. One player
 holds up a phone in landscape mode while teammates describe the visible word without saying
 the word or any part of it. The phone holder guesses, then tilts the phone to mark the card
 Correct or Pass. Always-available touch controls work as a fallback.
@@ -22,20 +22,20 @@ npm run build
 
 ## Motion controls
 
-TiltFrenzy uses browser `DeviceOrientationEvent` data when available. Motion controls are
+Tilted uses browser `DeviceOrientationEvent` data when available. Motion controls are
 optional: the large Correct and Pass buttons and keyboard shortcuts work without sensor data.
 
 Motion access normally requires HTTPS outside of local development. iOS Safari also requires
-the permission request to happen directly after a user taps a button. That is why TiltFrenzy
+the permission request to happen directly after a user taps a button. That is why Tilted
 requests access after **Start Round** is tapped instead of asking on page load.
 
-After permission is granted, move the phone to your forehead. TiltFrenzy notices the larger
+After permission is granted, move the phone to your forehead. Tilted notices the larger
 movement, shows **Ready?**, and silently calibrates while counting down from three. During the
 round, make a deliberate tilt down for Correct or up to Pass. The directions can be reversed
 in round setup. Return the phone to its starting position between cards so one movement does
 not score multiple cards.
 
-Browsers do not expose whether the phone's system rotation-lock toggle is enabled. TiltFrenzy
+Browsers do not expose whether the phone's system rotation-lock toggle is enabled. Tilted
 can detect that the viewport is still portrait and remind the player to disable Portrait
 Orientation Lock on iPhone or enable Auto-rotate on Android before the round starts.
 
@@ -69,7 +69,7 @@ HTTPS URL if you want motion controls on mobile devices.
 
 ## Docker
 
-TiltFrenzy also ships as a multi-stage Docker image. The final container serves the static
+Tilted also ships as a multi-stage Docker image. The final container serves the static
 bundle from an unprivileged Nginx process on port `8080`.
 
 Build and run it locally:
@@ -95,7 +95,7 @@ images to GitHub Container Registry after a push to `main`, a `v*` tag, or a man
 Replace `<github-owner>` with the GitHub account or organization that owns your repository:
 
 ```text
-ghcr.io/<github-owner>/tiltfrenzy:latest
+ghcr.io/<github-owner>/tilted:latest
 ```
 
 The workflow also publishes the branch name, Git tag, and commit SHA as image tags. Its image
@@ -103,7 +103,7 @@ path follows the GitHub repository automatically. To run the published image wit
 instead of building locally:
 
 ```bash
-TILTFRENZY_IMAGE=ghcr.io/<github-owner>/tiltfrenzy:latest docker compose up -d
+TILTED_IMAGE=ghcr.io/<github-owner>/tilted:latest docker compose up -d
 ```
 
 ## Run on Unraid
@@ -112,7 +112,7 @@ Create a new Docker container in Unraid with these values:
 
 | Setting | Value |
 | --- | --- |
-| Repository | `ghcr.io/<github-owner>/tiltfrenzy:latest` |
+| Repository | `ghcr.io/<github-owner>/tilted:latest` |
 | Container port | `8080` |
 | Host port | Any available port, such as `8080` |
 | Network type | Your usual reverse-proxy-compatible network |

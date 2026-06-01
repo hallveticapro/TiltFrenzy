@@ -1,9 +1,9 @@
 services:
-  tiltfrenzy:
-    image: ${TILTFRENZY_IMAGE:-tiltfrenzy:latest}
+  tilted:
+    image: ${TILTED_IMAGE:-tilted:latest}
     build:
       context: .
-    container_name: tiltfrenzy
+    container_name: tilted
     ports:
       - "8080:8080"
     restart: unless-stopped

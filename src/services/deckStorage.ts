@@ -1,7 +1,8 @@
 import type { Card, Deck, Difficulty } from "../types";
 import { createId } from "../utils/id";
 
-export const CUSTOM_DECKS_KEY = "tiltfrenzy.customDecks.v1";
+export const CUSTOM_DECKS_KEY = "tilted.customDecks.v1";
+const LEGACY_CUSTOM_DECKS_KEY = ["tilt", "frenzy.customDecks.v1"].join("");
 
 const difficulties: Difficulty[] = ["easy", "medium", "hard"];
 
@@ -63,14 +64,17 @@ export function validateDeck(value: unknown): Deck {
 }
 
 export function loadCustomDecks(storage: Storage = localStorage): Deck[] {
-  const stored = storage.getItem(CUSTOM_DECKS_KEY);
+  const stored = storage.getItem(CUSTOM_DECKS_KEY) ?? storage.getItem(LEGACY_CUSTOM_DECKS_KEY);
   if (!stored) {
     return [];
   }
 
   try {
     const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed.map(validateDeck) : [];
+    const decks = Array.isArray(parsed) ? parsed.map(validateDeck) : [];
+    storage.setItem(CUSTOM_DECKS_KEY, JSON.stringify(decks));
+    storage.removeItem(LEGACY_CUSTOM_DECKS_KEY);
+    return decks;
   } catch {
     return [];
   }

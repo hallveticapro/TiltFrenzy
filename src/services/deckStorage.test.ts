@@ -29,6 +29,15 @@ describe("deckStorage", () => {
     expect(loadCustomDecks()).toEqual([]);
   });
 
+  it("moves saved decks from the previous app namespace", () => {
+    const previousKey = ["tilt", "frenzy.customDecks.v1"].join("");
+    localStorage.setItem(previousKey, JSON.stringify([sampleDeck]));
+
+    expect(loadCustomDecks()).toEqual([{ ...sampleDeck, builtIn: false }]);
+    expect(localStorage.getItem(CUSTOM_DECKS_KEY)).not.toBeNull();
+    expect(localStorage.getItem(previousKey)).toBeNull();
+  });
+
   it("rejects decks with missing cards or blank prompts", () => {
     expect(() => validateDeck({ name: "No Cards", cards: [] })).toThrow(
       "Add at least one card",
