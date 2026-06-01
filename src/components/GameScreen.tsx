@@ -19,6 +19,8 @@ interface GameScreenProps {
   onRoundEnd: (result: RoundResult) => void;
 }
 
+const FEEDBACK_DURATION_MS = 500;
+
 function shuffled<T>(items: T[]): T[] {
   const result = [...items];
   for (let index = result.length - 1; index > 0; index -= 1) {
@@ -58,6 +60,7 @@ export function GameScreen({
   const outcomesRef = useRef<RoundCardResult[]>([]);
   const finishedRef = useRef(false);
   const handledMotionActionRef = useRef(0);
+  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const finishRound = useCallback(
     (outcomes = outcomesRef.current) => {
@@ -92,6 +95,13 @@ export function GameScreen({
       outcomesRef.current = nextOutcomes;
       setFeedback(outcome);
       setShowAnswer(false);
+      if (feedbackTimeoutRef.current !== null) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+      }
+      feedbackTimeoutRef.current = window.setTimeout(() => {
+        setFeedback(null);
+        feedbackTimeoutRef.current = null;
+      }, FEEDBACK_DURATION_MS);
 
       if (typeof navigator.vibrate === "function") {
         navigator.vibrate(outcome === "correct" ? 70 : [45, 35, 45]);
@@ -103,15 +113,22 @@ export function GameScreen({
         setPassCount((current) => current + 1);
       }
 
-      window.setTimeout(() => setFeedback(null), 350);
-
       if (cardIndex + 1 >= cards.length) {
-        window.setTimeout(() => finishRound(nextOutcomes), 220);
+        window.setTimeout(() => finishRound(nextOutcomes), FEEDBACK_DURATION_MS);
       } else {
         setCardIndex((current) => current + 1);
       }
     },
     [cardIndex, cards, finishRound, isPaused],
+  );
+
+  useEffect(
+    () => () => {
+      if (feedbackTimeoutRef.current !== null) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+      }
+    },
+    [],
   );
 
   useEffect(() => {
@@ -145,6 +162,11 @@ export function GameScreen({
 
   return (
     <main className={`game-screen ${feedback ? `game-screen--${feedback}` : ""}`}>
+      {feedback && (
+        <div className={`feedback-flash feedback-flash--${feedback}`} role="status">
+          <strong>{feedback === "correct" ? "Correct!" : "Pass"}</strong>
+        </div>
+      )}
       <header className="game-hud">
         <div>
           <span>Time</span>
@@ -180,7 +202,7 @@ export function GameScreen({
               <div className="answer-reveal">
                 {showAnswer ? (
                   <p>
-                    Answer: <strong>{currentCard.answer}</strong>
+                    Hint: <strong>{currentCard.answer}</strong>
                   </p>
                 ) : (
                   <button
@@ -188,7 +210,7 @@ export function GameScreen({
                     type="button"
                     onClick={() => setShowAnswer(true)}
                   >
-                    Reveal answer
+                    Reveal hint
                   </button>
                 )}
               </div>

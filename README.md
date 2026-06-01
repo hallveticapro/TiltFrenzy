@@ -1,8 +1,9 @@
 # TiltFrenzy
 
-TiltFrenzy is a mobile-first, classroom-friendly review game for browsers. One player holds up
-a phone while teammates give clues. The player tilts the phone to mark a card Correct or Pass,
-or uses the always-available touch controls.
+TiltFrenzy is a mobile-first, classroom-friendly team guessing game for browsers. One player
+holds up a phone in landscape mode while teammates describe the visible word without saying
+the word or any part of it. The phone holder guesses, then tilts the phone to mark the card
+Correct or Pass. Always-available touch controls work as a fallback.
 
 ## Run locally
 
@@ -52,7 +53,8 @@ not score multiple cards.
 
 Use **Create/Edit Decks** to make decks stored in browser LocalStorage. Built-in decks are
 read-only, but each can be copied into an editable custom deck. Prompts can be pasted one per
-line. Full decks can also be exported and imported as JSON.
+line. Each prompt is the target word teammates describe; custom cards can also include an
+optional hint. Full decks can be exported and imported as JSON.
 
 ## Deploy
 

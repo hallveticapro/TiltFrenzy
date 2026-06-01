@@ -197,7 +197,7 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                       <input value={card.prompt} onChange={(event) => updateCard(card.id, { prompt: event.target.value })} />
                     </label>
                     <label>
-                      <span className="field-label">Answer or hint</span>
+                      <span className="field-label">Optional hint</span>
                       <input value={card.answer ?? ""} onChange={(event) => updateCard(card.id, { answer: event.target.value })} />
                     </label>
                     <label>

@@ -367,6 +367,31 @@ kbd {
   background: #ffe0c9;
 }
 
+.feedback-flash {
+  position: fixed;
+  z-index: 10;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  color: white;
+  pointer-events: none;
+}
+
+.feedback-flash strong {
+  font-size: clamp(4rem, 20vw, 12rem);
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+  text-shadow: 0 0.12em 0 rgb(0 0 0 / 14%);
+}
+
+.feedback-flash--correct {
+  background: #168562;
+}
+
+.feedback-flash--pass {
+  background: #de3f35;
+}
+
 .game-hud {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -553,6 +578,55 @@ kbd {
 .prose {
   font-size: 1.05rem;
   line-height: 1.65;
+}
+
+.setup-note {
+  margin-bottom: 0;
+  line-height: 1.45;
+}
+
+.rotate-card {
+  display: grid;
+  min-height: 18rem;
+  place-items: center;
+  align-content: center;
+  gap: 2rem;
+  border: 2px solid #d5e4df;
+  border-radius: 1.35rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 14px 0 rgb(23 50 77 / 7%);
+  background: rgb(255 255 255 / 88%);
+}
+
+.rotate-card h2 {
+  font-size: clamp(1.4rem, 6vw, 2.2rem);
+}
+
+.rotate-card p {
+  max-width: 34rem;
+  margin-bottom: 0;
+  color: #5a6d75;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.rotate-card__phone {
+  display: grid;
+  width: 9rem;
+  height: 5.2rem;
+  place-items: center;
+  border: 0.45rem solid #17324d;
+  border-radius: 1.1rem;
+  background: #e1f5ef;
+}
+
+.rotate-card__phone span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #00778d;
+  transform: translateX(-3.35rem);
 }
 
 @media (max-width: 760px) {

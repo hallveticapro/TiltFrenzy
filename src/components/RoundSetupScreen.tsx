@@ -40,6 +40,10 @@ export function RoundSetupScreen({
       }
     >
       <section className="panel stack">
+        <p className="muted setup-note">
+          Hold the phone sideways with the screen facing your teammates. They describe each
+          word without saying it while you guess.
+        </p>
         <div>
           <h2>Round length</h2>
           <div className="segmented-control" role="group" aria-label="Round length">

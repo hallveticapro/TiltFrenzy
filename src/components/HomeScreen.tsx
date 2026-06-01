@@ -8,14 +8,15 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onPlay, onEditDecks, onHowToPlay }: HomeScreenProps) {
   return (
-    <ScreenLayout title="TiltFrenzy" eyebrow="Classroom review, with momentum">
+    <ScreenLayout title="TiltFrenzy" eyebrow="Team clues, quick guesses">
       <section className="hero-panel">
         <div className="hero-panel__burst" aria-hidden="true">
           TF
         </div>
         <div>
           <p className="hero-panel__intro">
-            Hold up a phone, give clues, and tilt through a fast-paced review round.
+            Hold up a phone while teammates describe the word. Guess fast, then tilt for the
+            next card.
           </p>
           <p className="muted">Motion controls are optional. Touch buttons always work.</p>
         </div>

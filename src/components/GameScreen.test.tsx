@@ -32,7 +32,9 @@ describe("GameScreen", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /correct/i }));
-    act(() => vi.advanceTimersByTime(250));
+    expect(screen.getByRole("status")).toHaveTextContent("Correct!");
+    expect(screen.getByRole("status")).toHaveClass("feedback-flash--correct");
+    act(() => vi.advanceTimersByTime(500));
 
     expect(onRoundEnd).toHaveBeenCalledTimes(1);
     expect(onRoundEnd.mock.calls[0][0].correctCards).toEqual([deck.cards[0]]);
@@ -53,10 +55,12 @@ describe("GameScreen", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /reveal answer/i }));
-    expect(screen.getByText(/answer:/i)).toHaveTextContent("Force");
+    fireEvent.click(screen.getByRole("button", { name: /reveal hint/i }));
+    expect(screen.getByText(/hint:/i)).toHaveTextContent("Force");
     fireEvent.keyDown(window, { key: "ArrowLeft" });
-    act(() => vi.advanceTimersByTime(250));
+    expect(screen.getByRole("status")).toHaveTextContent("Pass");
+    expect(screen.getByRole("status")).toHaveClass("feedback-flash--pass");
+    act(() => vi.advanceTimersByTime(500));
 
     expect(onRoundEnd.mock.calls[0][0].passedCards).toEqual([deck.cards[0]]);
     vi.useRealTimers();
