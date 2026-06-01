@@ -28,6 +28,7 @@ describe("GameScreen", () => {
         motionStatus="off"
         motionAction={null}
         onRoundEnd={onRoundEnd}
+        onQuit={vi.fn()}
       />,
     );
 
@@ -52,6 +53,7 @@ describe("GameScreen", () => {
         motionStatus="off"
         motionAction={null}
         onRoundEnd={onRoundEnd}
+        onQuit={vi.fn()}
       />,
     );
 
@@ -64,5 +66,69 @@ describe("GameScreen", () => {
 
     expect(onRoundEnd.mock.calls[0][0].passedCards).toEqual([deck.cards[0]]);
     vi.useRealTimers();
+  });
+
+  it("hides fallback buttons for active motion until the menu is opened", () => {
+    render(
+      <GameScreen
+        deck={deck}
+        settings={{ ...settings, motionEnabled: true }}
+        motionStatus="calibrated"
+        motionAction={null}
+        onRoundEnd={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show controls" }));
+    expect(screen.getByRole("region", { name: "Card actions" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Hide controls" }));
+    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
+  });
+
+  it("shows a quit option inside the compact paused card", () => {
+    const onQuit = vi.fn();
+    render(
+      <GameScreen
+        deck={deck}
+        settings={settings}
+        motionStatus="off"
+        motionAction={null}
+        onRoundEnd={vi.fn()}
+        onQuit={onQuit}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(screen.getByText("Round paused")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Quit Round" }));
+    expect(onQuit).toHaveBeenCalledTimes(1);
+  });
+
+  it("scales extra-long custom prompts down to stay inside the card", () => {
+    render(
+      <GameScreen
+        deck={{
+          id: "long-prompt",
+          name: "Custom",
+          cards: [
+            {
+              id: "long-card",
+              prompt:
+                "Describe this intentionally very long custom prompt without letting the card overflow the viewport",
+            },
+          ],
+        }}
+        settings={settings}
+        motionStatus="off"
+        motionAction={null}
+        onRoundEnd={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("heading")).toHaveClass("game-card__prompt--extra-long");
   });
 });

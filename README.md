@@ -24,6 +24,9 @@ npm run build
 
 Tilted uses browser `DeviceOrientationEvent` data when available. Motion controls are
 optional: the large Correct and Pass buttons and keyboard shortcuts work without sensor data.
+During an active motion round, the buttons stay hidden so the card fills the screen. Tap the
+top-right menu button to reveal the fallback controls or pause the round. A paused round can
+be resumed or quit.
 
 Motion access normally requires HTTPS outside of local development. iOS Safari also requires
 the permission request to happen directly after a user taps a button. That is why Tilted

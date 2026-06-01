@@ -17,6 +17,7 @@ interface GameScreenProps {
   motionStatus: MotionStatus;
   motionAction: TiltAction | null;
   onRoundEnd: (result: RoundResult) => void;
+  onQuit: () => void;
 }
 
 const FEEDBACK_DURATION_MS = 500;
@@ -50,12 +51,14 @@ export function GameScreen({
   motionStatus,
   motionAction,
   onRoundEnd,
+  onQuit,
 }: GameScreenProps) {
   const cards = useMemo(() => shuffled(deck.cards), [deck.cards]);
   const [cardIndex, setCardIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [passCount, setPassCount] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const [feedback, setFeedback] = useState<CardOutcome | null>(null);
   const outcomesRef = useRef<RoundCardResult[]>([]);
   const finishedRef = useRef(false);
@@ -159,45 +162,82 @@ export function GameScreen({
   }, [recordOutcome, togglePause]);
 
   const currentCard: Card | undefined = cards[cardIndex];
+  const promptLength = currentCard?.prompt.length ?? 0;
+  const promptSizeClass =
+    promptLength > 80
+      ? "game-card__prompt--extra-long"
+      : promptLength > 48
+        ? "game-card__prompt--long"
+        : "";
+  const hasActiveMotion = settings.motionEnabled && motionStatus === "calibrated";
+  const showMenuButton = hasActiveMotion && !isPaused;
+  const showActionPanel = !isPaused && (!hasActiveMotion || showControls);
 
   return (
-    <main className={`game-screen ${feedback ? `game-screen--${feedback}` : ""}`}>
+    <main
+      className={`game-screen ${showActionPanel ? "game-screen--actions-visible" : ""} ${
+        feedback ? `game-screen--${feedback}` : ""
+      }`}
+    >
       {feedback && (
         <div className={`feedback-flash feedback-flash--${feedback}`} role="status">
           <strong>{feedback === "correct" ? "Correct!" : "Pass"}</strong>
         </div>
       )}
-      <header className="game-hud">
-        <div>
-          <span>Time</span>
-          <strong>{remainingSeconds}</strong>
+      <header className="game-topbar">
+        <div className="game-hud">
+          <div>
+            <span>Time</span>
+            <strong>{remainingSeconds}</strong>
+          </div>
+          <div>
+            <span>Score</span>
+            <strong>{score}</strong>
+          </div>
+          <div>
+            <span>Pass</span>
+            <strong>{passCount}</strong>
+          </div>
+          <div className={`motion-pill motion-pill--${motionStatus}`}>
+            <span>Motion</span>
+            <strong>{hasActiveMotion ? "On" : "Buttons"}</strong>
+          </div>
         </div>
-        <div>
-          <span>Score</span>
-          <strong>{score}</strong>
-        </div>
-        <div>
-          <span>Pass</span>
-          <strong>{passCount}</strong>
-        </div>
-        <div className={`motion-pill motion-pill--${motionStatus}`}>
-          <span>Motion</span>
-          <strong>{settings.motionEnabled && motionStatus === "calibrated" ? "On" : "Buttons"}</strong>
-        </div>
+        {showMenuButton && (
+          <button
+            className="game-menu-button"
+            type="button"
+            aria-controls="optional-card-actions"
+            aria-expanded={showControls}
+            aria-label={showControls ? "Hide controls" : "Show controls"}
+            onClick={() => setShowControls((current) => !current)}
+          >
+            <span className="game-menu-button__icon" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+        )}
       </header>
 
       <section className="game-card" aria-live="polite">
         {isPaused ? (
           <div className="game-card__paused">
             <p>Round paused</p>
-            <button className="button button--primary" type="button" onClick={togglePause}>
-              Resume
-            </button>
+            <div className="game-card__paused-actions">
+              <button className="button button--primary" type="button" onClick={togglePause}>
+                Resume
+              </button>
+              <button className="button button--danger" type="button" onClick={onQuit}>
+                Quit Round
+              </button>
+            </div>
           </div>
         ) : (
           <>
             <p className="game-card__category">{currentCard?.category ?? deck.name}</p>
-            <h1>{currentCard?.prompt}</h1>
+            <h1 className={`game-card__prompt ${promptSizeClass}`}>{currentCard?.prompt}</h1>
             {currentCard?.answer && (
               <div className="answer-reveal">
                 {showAnswer ? (
@@ -219,29 +259,29 @@ export function GameScreen({
         )}
       </section>
 
-      <section className="game-actions" aria-label="Card actions">
-        <button
-          className="game-action game-action--pass"
-          type="button"
-          disabled={isPaused}
-          onClick={() => recordOutcome("pass")}
-        >
-          <span aria-hidden="true">←</span>
-          Pass
-        </button>
-        <button className="pause-button" type="button" onClick={togglePause}>
-          {isPaused ? "Resume" : "Pause"}
-        </button>
-        <button
-          className="game-action game-action--correct"
-          type="button"
-          disabled={isPaused}
-          onClick={() => recordOutcome("correct")}
-        >
-          Correct
-          <span aria-hidden="true">→</span>
-        </button>
-      </section>
+      {showActionPanel && (
+        <section id="optional-card-actions" className="game-actions" aria-label="Card actions">
+          <button
+            className="game-action game-action--pass"
+            type="button"
+            onClick={() => recordOutcome("pass")}
+          >
+            <span aria-hidden="true">←</span>
+            Pass
+          </button>
+          <button className="pause-button" type="button" onClick={togglePause}>
+            Pause
+          </button>
+          <button
+            className="game-action game-action--correct"
+            type="button"
+            onClick={() => recordOutcome("correct")}
+          >
+            Correct
+            <span aria-hidden="true">→</span>
+          </button>
+        </section>
+      )}
     </main>
   );
 }

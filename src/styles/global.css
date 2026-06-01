@@ -409,13 +409,19 @@ kbd {
 
 .game-screen {
   display: grid;
-  min-height: 100vh;
-  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.9rem;
+  overflow: hidden;
   padding: max(0.7rem, env(safe-area-inset-top)) max(0.7rem, env(safe-area-inset-right))
     max(0.7rem, env(safe-area-inset-bottom)) max(0.7rem, env(safe-area-inset-left));
   background: #f6f0de;
   transition: background 180ms ease;
+}
+
+.game-screen--actions-visible {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .game-screen--correct {
@@ -451,6 +457,12 @@ kbd {
   background: #de3f35;
 }
 
+.game-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
 .game-hud {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -480,8 +492,35 @@ kbd {
   font-size: 1.35rem;
 }
 
+.game-menu-button {
+  display: grid;
+  min-width: 3.7rem;
+  place-items: center;
+  border: 0;
+  border-radius: 0.8rem;
+  color: #17324d;
+  background: #ffca42;
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.game-menu-button__icon {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.game-menu-button__icon span {
+  display: block;
+  width: 1.45rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
 .game-card {
   display: grid;
+  min-height: 0;
   place-items: center;
   align-content: center;
   overflow: hidden;
@@ -495,13 +534,39 @@ kbd {
 .game-card h1 {
   max-width: 17ch;
   margin: 0;
-  font-size: clamp(2.6rem, 11vw, 7.8rem);
+  overflow-wrap: anywhere;
+  font-size: clamp(2rem, min(11vw, 15vh), 7.8rem);
   line-height: 0.98;
 }
 
+.game-card__prompt--long {
+  font-size: clamp(1.65rem, min(8.5vw, 12vh), 5.8rem);
+}
+
+.game-card__prompt--extra-long {
+  max-width: 25ch;
+  font-size: clamp(1.3rem, min(6.5vw, 9vh), 4.2rem);
+}
+
+.game-card__paused {
+  display: grid;
+  max-height: 100%;
+  gap: 0.9rem;
+  place-items: center;
+}
+
 .game-card__paused p {
-  font-size: clamp(2.6rem, 12vw, 6rem);
+  margin-bottom: 0;
+  font-size: clamp(2rem, min(12vw, 14vh), 5rem);
   font-weight: 900;
+  line-height: 0.95;
+}
+
+.game-card__paused-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
 }
 
 .answer-reveal {
@@ -703,12 +768,12 @@ kbd {
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .game-screen {
+  .game-screen--actions-visible {
     grid-template-columns: 1fr minmax(10rem, 19rem);
     grid-template-rows: auto 1fr;
   }
 
-  .game-hud {
+  .game-screen--actions-visible .game-topbar {
     grid-column: 1 / -1;
   }
 

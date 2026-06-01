@@ -232,6 +232,11 @@ function App() {
           setRoundResult(result);
           setScreen("results");
         }}
+        onQuit={() => {
+          motion.resetActions();
+          setRoundResult(null);
+          setScreen("setup");
+        }}
       />
     );
   }

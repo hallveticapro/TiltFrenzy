@@ -24,7 +24,10 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
           <li>Guess the word from their clues. Do not look at the screen.</li>
           <li>Tap Start Round, place the phone on your forehead, and hold still for 3, 2, 1.</li>
           <li>Tilt down for Correct or up to Pass, then return to the starting position.</li>
-          <li>Use the large buttons any time motion is unavailable or inconvenient.</li>
+          <li>
+            Use the menu button during a motion round to reveal fallback controls, pause, or
+            quit. Button-only rounds keep the controls visible.
+          </li>
         </ol>
         <p>
           On a keyboard, use <kbd>→</kbd> for Correct, <kbd>←</kbd> for Pass, and{" "}
