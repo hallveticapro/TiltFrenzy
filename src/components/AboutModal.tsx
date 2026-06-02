@@ -7,8 +7,8 @@ interface AboutModalProps {
 const socialLinks = [
   {
     name: "GitHub",
-    handle: "hallveticapro/math-quest-live",
-    href: "https://github.com/hallveticapro/math-quest-live",
+    handle: "hallveticapro/Tilted",
+    href: "https://github.com/hallveticapro/Tilted",
     icon: "./assets/social-github.svg",
   },
   {
@@ -114,9 +114,9 @@ export function AboutModal({ onClose }: AboutModalProps) {
           </section>
 
           <footer className="about-modal__footer">
+            <p>Tilted is an unofficial fan-made game and is not affiliated with featured brands.</p>
             <p>Made for educators with love by Andrew Hall</p>
             <p>© 2026 Tilted</p>
-            <p>Tilted is an unofficial fan-made game and is not affiliated with featured brands.</p>
           </footer>
         </div>
       </section>

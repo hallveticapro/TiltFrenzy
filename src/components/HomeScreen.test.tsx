@@ -15,7 +15,7 @@ describe("HomeScreen", () => {
     );
     expect(screen.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
       "href",
-      "https://github.com/hallveticapro/math-quest-live",
+      "https://github.com/hallveticapro/Tilted",
     );
 
     fireEvent.keyDown(window, { key: "Escape" });
