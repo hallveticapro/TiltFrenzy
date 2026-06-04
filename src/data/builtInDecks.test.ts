@@ -58,4 +58,22 @@ describe("builtInDecks", () => {
     );
     expect(builtInDecks.find(({ id }) => id === "us-states")?.description).toContain("U.S. states");
   });
+
+  it("uses varied deck descriptions with proper noun casing", () => {
+    const descriptions = builtInDecks.map(({ description }) => description ?? "");
+
+    expect(descriptions.every((description) => description.length > 0)).toBe(true);
+    expect(descriptions.every((description) => !/give clues|without saying|describe .* without/i.test(description))).toBe(
+      true,
+    );
+    expect(builtInDecks.find(({ id }) => id === "disney-characters")?.description).toContain(
+      "Disney",
+    );
+    expect(builtInDecks.find(({ id }) => id === "pixar-characters")?.description).toContain(
+      "Pixar",
+    );
+    expect(builtInDecks.find(({ id }) => id === "star-wars-characters")?.description).toContain(
+      "Star Wars",
+    );
+  });
 });
