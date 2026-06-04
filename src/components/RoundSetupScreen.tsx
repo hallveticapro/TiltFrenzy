@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Deck, RoundSettings } from "../types";
 import { ScreenLayout } from "./ScreenLayout";
 
@@ -29,6 +30,7 @@ export function RoundSetupScreen({
   onChooseDeck,
   onTestMotion,
 }: RoundSetupScreenProps) {
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const update = (partial: Partial<RoundSettings>) =>
     onSettingsChange({ ...settings, ...partial });
   const subcategories = Array.from(
@@ -52,10 +54,6 @@ export function RoundSetupScreen({
       }
     >
       <section className="panel stack">
-        <p className="muted setup-note">
-          Hold the phone sideways with the screen facing your teammates. They describe each
-          word without saying it while you guess.
-        </p>
         <div>
           <h2>Play style</h2>
           <div className="segmented-control segmented-control--two" role="group" aria-label="Play style">
@@ -102,88 +100,6 @@ export function RoundSetupScreen({
             onChange={(event) => update({ motionEnabled: event.target.checked })}
           />
         </label>}
-        {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
-          <label className="toggle-row">
-            <span>
-              <strong>Reverse tilt directions</strong>
-              <small>Down becomes Pass and up becomes Correct.</small>
-            </span>
-            <input
-              aria-label="Reverse tilt directions"
-              type="checkbox"
-              checked={settings.reverseTilt}
-              onChange={(event) => update({ reverseTilt: event.target.checked })}
-            />
-          </label>
-        )}
-        {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
-          <button className="button button--secondary" type="button" onClick={onTestMotion}>Test Motion Controls</button>
-        )}
-        <label className="toggle-row">
-          <span>
-            <strong>Fullscreen during rounds</strong>
-            <small>Use the largest stable view when this browser supports fullscreen.</small>
-          </span>
-          <input aria-label="Use fullscreen during rounds" type="checkbox" checked={settings.fullscreenEnabled} onChange={(event) => update({ fullscreenEnabled: event.target.checked })} />
-        </label>
-        {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
-          <div>
-            <h2>Tilt sensitivity</h2>
-            <div className="segmented-control segmented-control--three" role="group" aria-label="Tilt sensitivity">
-              {(Object.keys(thresholds) as RoundSettings["sensitivityPreset"][]).map((preset) => (
-                <button
-                  className={settings.sensitivityPreset === preset ? "is-selected" : ""}
-                  key={preset}
-                  type="button"
-                  onClick={() => update({ sensitivityPreset: preset, tiltThreshold: thresholds[preset] })}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <div>
-          <h2>Card filters</h2>
-          <div className="setup-grid">
-            <label>
-              <span className="field-label">Difficulty</span>
-              <select
-                value={settings.difficultyFilter}
-                onChange={(event) => update({ difficultyFilter: event.target.value as RoundSettings["difficultyFilter"] })}
-              >
-                <option value="all">All difficulties</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </label>
-            <label>
-              <span className="field-label">Subcategory</span>
-              <select value={settings.subcategoryFilter} onChange={(event) => update({ subcategoryFilter: event.target.value })}>
-                <option value="">All subcategories</option>
-                {subcategories.map((category) => <option key={category}>{category}</option>)}
-              </select>
-            </label>
-          </div>
-          <p className="muted setup-note">{eligibleCardCount} matching cards available.</p>
-        </div>
-        <label className="toggle-row">
-          <span>
-            <strong>Cycle cards if needed</strong>
-            <small>Shuffle and reuse the deck if the team reaches the end before time expires.</small>
-          </span>
-          <input aria-label="Cycle cards if needed" type="checkbox" checked={settings.cycleDeck} onChange={(event) => update({ cycleDeck: event.target.checked })} />
-        </label>
-        <label>
-          <span className="field-label">Optional pass limit</span>
-          <select value={settings.passLimit ?? ""} onChange={(event) => update({ passLimit: event.target.value ? Number(event.target.value) : null })}>
-            <option value="">No pass limit</option>
-            <option value="3">3 passes</option>
-            <option value="5">5 passes</option>
-            <option value="10">10 passes</option>
-          </select>
-        </label>
         <label className="toggle-row">
           <span>
             <strong>Sound effects</strong>
@@ -208,6 +124,128 @@ export function RoundSetupScreen({
             onChange={(event) => update({ vibrationEnabled: event.target.checked })}
           />
         </label>
+
+        <button
+          className="advanced-settings-toggle"
+          type="button"
+          aria-expanded={showAdvancedSettings}
+          aria-controls="advanced-round-settings"
+          onClick={() => setShowAdvancedSettings((current) => !current)}
+        >
+          <span>Advanced Settings</span>
+          <strong aria-hidden="true">{showAdvancedSettings ? "-" : "+"}</strong>
+        </button>
+
+        {showAdvancedSettings && (
+          <section className="advanced-settings-panel stack" id="advanced-round-settings">
+            {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
+              <p className="muted motion-start-note">
+                Motion access will be requested when you start. During play, tilt down for
+                Correct and up to Pass.
+              </p>
+            )}
+            {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
+              <label className="toggle-row">
+                <span>
+                  <strong>Reverse tilt directions</strong>
+                  <small>Down becomes Pass and up becomes Correct.</small>
+                </span>
+                <input
+                  aria-label="Reverse tilt directions"
+                  type="checkbox"
+                  checked={settings.reverseTilt}
+                  onChange={(event) => update({ reverseTilt: event.target.checked })}
+                />
+              </label>
+            )}
+            {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
+              <button className="button button--secondary" type="button" onClick={onTestMotion}>
+                Test Motion Controls
+              </button>
+            )}
+            <label className="toggle-row">
+              <span>
+                <strong>Fullscreen during rounds</strong>
+                <small>Use the largest stable view when this browser supports fullscreen.</small>
+              </span>
+              <input
+                aria-label="Use fullscreen during rounds"
+                type="checkbox"
+                checked={settings.fullscreenEnabled}
+                onChange={(event) => update({ fullscreenEnabled: event.target.checked })}
+              />
+            </label>
+            {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
+              <div>
+                <h2>Tilt sensitivity</h2>
+                <div className="segmented-control segmented-control--three" role="group" aria-label="Tilt sensitivity">
+                  {(Object.keys(thresholds) as RoundSettings["sensitivityPreset"][]).map((preset) => (
+                    <button
+                      className={settings.sensitivityPreset === preset ? "is-selected" : ""}
+                      key={preset}
+                      type="button"
+                      onClick={() => update({ sensitivityPreset: preset, tiltThreshold: thresholds[preset] })}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <h2>Card filters</h2>
+              <div className="setup-grid">
+                <label>
+                  <span className="field-label">Difficulty</span>
+                  <select
+                    value={settings.difficultyFilter}
+                    onChange={(event) => update({ difficultyFilter: event.target.value as RoundSettings["difficultyFilter"] })}
+                  >
+                    <option value="all">All difficulties</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="field-label">Subcategory</span>
+                  <select value={settings.subcategoryFilter} onChange={(event) => update({ subcategoryFilter: event.target.value })}>
+                    <option value="">All subcategories</option>
+                    {subcategories.map((category) => <option key={category}>{category}</option>)}
+                  </select>
+                </label>
+              </div>
+              <p className="muted setup-note">{eligibleCardCount} matching cards available.</p>
+            </div>
+            <label className="toggle-row">
+              <span>
+                <strong>Cycle cards if needed</strong>
+                <small>Shuffle and reuse the deck if the team reaches the end before time expires.</small>
+              </span>
+              <input
+                aria-label="Cycle cards if needed"
+                type="checkbox"
+                checked={settings.cycleDeck}
+                onChange={(event) => update({ cycleDeck: event.target.checked })}
+              />
+            </label>
+            <label>
+              <span className="field-label">Optional pass limit</span>
+              <select value={settings.passLimit ?? ""} onChange={(event) => update({ passLimit: event.target.value ? Number(event.target.value) : null })}>
+                <option value="">No pass limit</option>
+                <option value="3">3 passes</option>
+                <option value="5">5 passes</option>
+                <option value="10">10 passes</option>
+              </select>
+            </label>
+          </section>
+        )}
+
+        {eligibleCardCount === 0 && (
+          <p className="notice notice--warning">
+            No cards match the current filters. Open Advanced Settings to change them.
+          </p>
+        )}
         {motionError && (
           <div className="notice notice--warning stack">
             <p>{motionError}</p>
@@ -217,12 +255,6 @@ export function RoundSetupScreen({
               </button>
             )}
           </div>
-        )}
-        {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
-          <p className="muted motion-start-note">
-            Motion access will be requested when you start. During play, tilt down for Correct
-            and up to Pass.
-          </p>
         )}
         <button className="button button--primary button--large" type="button" disabled={eligibleCardCount === 0} onClick={onStartRound}>
           Start Round

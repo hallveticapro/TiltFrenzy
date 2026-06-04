@@ -608,6 +608,37 @@ kbd {
   min-height: 2rem;
 }
 
+.advanced-settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3rem;
+  border: 2px dashed #b9d6d1;
+  border-radius: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  color: #17324d;
+  background: rgb(255 255 255 / 62%);
+  font-weight: 850;
+}
+
+.advanced-settings-toggle strong {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 999px;
+  color: white;
+  background: #00778d;
+  line-height: 1;
+}
+
+.advanced-settings-panel {
+  border: 2px solid #d5e4df;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: rgb(255 255 255 / 54%);
+}
+
 .setup-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

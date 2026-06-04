@@ -1,0 +1,75 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import type { Deck, RoundSettings } from "../types";
+import { RoundSetupScreen } from "./RoundSetupScreen";
+
+const deck: Deck = {
+  id: "deck",
+  name: "Starter",
+  cards: [
+    { id: "one", prompt: "One", category: "Numbers", difficulty: "easy" },
+    { id: "two", prompt: "Two", category: "Numbers", difficulty: "medium" },
+  ],
+};
+
+const settings: RoundSettings = {
+  deckId: deck.id,
+  durationSeconds: 60,
+  motionEnabled: true,
+  reverseTilt: false,
+  tiltThreshold: 40,
+  sensitivityPreset: "standard",
+  soundEnabled: true,
+  vibrationEnabled: true,
+  gameplayStyle: "forehead",
+  difficultyFilter: "all",
+  subcategoryFilter: "",
+  cycleDeck: false,
+  passLimit: null,
+  fullscreenEnabled: false,
+};
+
+describe("RoundSetupScreen", () => {
+  it("keeps advanced controls collapsed until requested", () => {
+    render(
+      <RoundSetupScreen
+        deck={deck}
+        settings={settings}
+        motionError={null}
+        onSettingsChange={vi.fn()}
+        onStartRound={vi.fn()}
+        onContinueWithoutMotion={vi.fn()}
+        onChooseDeck={vi.fn()}
+        onTestMotion={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("group", { name: "Play style" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Round length" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Use motion controls" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Use sound effects" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Use vibration" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start Round" })).toBeVisible();
+
+    expect(screen.queryByRole("checkbox", { name: "Reverse tilt directions" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Test Motion Controls" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Tilt sensitivity" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Difficulty")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Motion access will be requested/)).not.toBeInTheDocument();
+
+    const advancedToggle = screen.getByRole("button", { name: "Advanced Settings" });
+    expect(advancedToggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(advancedToggle);
+
+    expect(screen.getByRole("button", { name: "Advanced Settings" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByRole("checkbox", { name: "Reverse tilt directions" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Test Motion Controls" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Tilt sensitivity" })).toBeVisible();
+    expect(screen.getByLabelText("Difficulty")).toBeVisible();
+    expect(screen.getByText(/Motion access will be requested/)).toBeVisible();
+  });
+});
