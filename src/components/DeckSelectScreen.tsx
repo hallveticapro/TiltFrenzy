@@ -82,7 +82,6 @@ export function DeckSelectScreen({
   const [query, setQuery] = useState("");
   const [library, setLibrary] = useState<"all" | "built-in" | "custom">("all");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mixedInfoOpen, setMixedInfoOpen] = useState(false);
   const categoryBuiltInDecks =
     selectedCategory === ALL_CATEGORIES
       ? builtInDecks
@@ -142,7 +141,7 @@ export function DeckSelectScreen({
         onSelect={setSelectedCategory}
       />
       <section className="deck-toolbar" aria-label="Deck tools">
-        <div className="deck-toolbar__actions">
+        <div className="deck-toolbar__main">
           <button
             className={`button button--ghost button--small deck-search-toggle ${hasActiveDiscoveryFilters ? "is-active" : ""}`}
             type="button"
@@ -152,43 +151,31 @@ export function DeckSelectScreen({
             onClick={() => setSearchOpen((current) => !current)}
           >
             <span className="deck-search-toggle__icon" aria-hidden="true" />
-            <span>Search</span>
-            {hasActiveDiscoveryFilters && <small>Filters on</small>}
           </button>
-          <button
-            className="button button--secondary button--small"
-            type="button"
-            disabled={surpriseCandidates.length === 0}
-            onClick={chooseSurprise}
-          >
-            Surprise Me
-          </button>
-          {library !== "custom" && visibleBuiltInDecks.length > 1 && (
-            <div className="mixed-play-control">
+          <div className="deck-toolbar__actions">
+            <button
+              className="button button--secondary button--small"
+              type="button"
+              disabled={surpriseCandidates.length === 0}
+              onClick={chooseSurprise}
+            >
+              Surprise Me
+            </button>
+            {library !== "custom" && visibleBuiltInDecks.length > 1 && (
               <button
                 className="button button--secondary button--small"
                 type="button"
+                aria-describedby="mixed-category-help"
                 onClick={() => onSelectMixed(visibleBuiltInDecks, selectedCategory)}
               >
                 Play Mixed Category
               </button>
-              <button
-                className="mixed-info-button"
-                type="button"
-                aria-label="Explain Play Mixed Category"
-                aria-expanded={mixedInfoOpen}
-                aria-controls="mixed-category-help"
-                onClick={() => setMixedInfoOpen((current) => !current)}
-              >
-                ?
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-        {mixedInfoOpen && (
+        {library !== "custom" && visibleBuiltInDecks.length > 1 && (
           <p className="deck-mixed-help" id="mixed-category-help">
-            Mixed category shuffles cards from every visible built-in deck in {mixedCategoryLabel}.
-            Use it when you want one bigger grab bag instead of choosing a single deck.
+            Mixed category combines visible built-in decks in {mixedCategoryLabel} into one shuffled round.
           </p>
         )}
       </section>

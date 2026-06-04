@@ -474,6 +474,17 @@ kbd {
   transform: translateY(-50%);
 }
 
+.category-scroller__arrow-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
 .category-scroller__arrow--left {
   left: -0.35rem;
 }
@@ -534,27 +545,32 @@ kbd {
   margin: -0.15rem 0 1rem;
 }
 
+.deck-toolbar__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
 .deck-toolbar__actions {
   display: flex;
   flex-wrap: wrap;
+  min-width: 0;
+  justify-content: flex-end;
   gap: 0.55rem;
   align-items: center;
 }
 
 .deck-search-toggle {
-  gap: 0.55rem;
+  width: 2.45rem;
+  min-height: 2.45rem;
+  padding: 0;
 }
 
 .deck-search-toggle.is-active {
   border-color: #8bc9c3;
   background: #e1f5ef;
-}
-
-.deck-search-toggle small {
-  border-left: 2px solid rgb(23 50 77 / 16%);
-  padding-left: 0.45rem;
-  color: #5a6d75;
-  font-size: 0.72rem;
 }
 
 .deck-search-toggle__icon {
@@ -580,41 +596,14 @@ kbd {
   transform-origin: center;
 }
 
-.mixed-play-control {
-  display: inline-flex;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.mixed-info-button {
-  display: grid;
-  width: 2.35rem;
-  height: 2.35rem;
-  place-items: center;
-  border: 2px solid #8bc9c3;
-  border-radius: 999px;
-  color: #17324d;
-  background: #e1f5ef;
-  box-shadow: 0 3px 0 #a7d7d1;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.mixed-info-button[aria-expanded="true"] {
-  border-color: #00778d;
-  color: white;
-  background: #00778d;
-}
-
 .deck-mixed-help {
   max-width: 42rem;
-  border: 2px dashed #b9d6d1;
-  border-radius: 0.9rem;
-  margin: 0;
-  padding: 0.75rem 0.85rem;
-  color: #405761;
-  background: rgb(255 255 255 / 62%);
+  justify-self: end;
+  margin: -0.25rem 0 0;
+  color: #5a6d75;
+  font-size: 0.82rem;
   line-height: 1.35;
+  text-align: right;
 }
 
 .deck-discovery {
@@ -1182,6 +1171,12 @@ kbd {
   width: 1.8rem;
   height: 1.8rem;
   font-size: 1rem;
+}
+
+.category-scroller--compact .category-scroller__arrow-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  stroke-width: 4.4;
 }
 
 .starter-decks__count {

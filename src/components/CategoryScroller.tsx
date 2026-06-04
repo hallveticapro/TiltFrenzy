@@ -8,6 +8,23 @@ interface CategoryScrollerProps {
   compact?: boolean;
 }
 
+function CategoryArrowIcon({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="category-scroller__arrow-icon"
+      viewBox="0 0 24 24"
+      focusable="false"
+    >
+      {direction === "left" ? (
+        <path d="M14.8 5.4 8.4 12l6.4 6.6" />
+      ) : (
+        <path d="m9.2 5.4 6.4 6.6-6.4 6.6" />
+      )}
+    </svg>
+  );
+}
+
 export function CategoryScroller({
   ariaLabel,
   categories,
@@ -54,7 +71,7 @@ export function CategoryScroller({
         disabled={!canScrollLeft}
         onClick={() => scroll(-1)}
       >
-        &lt;
+        <CategoryArrowIcon direction="left" />
       </button>
       <div className="category-scroller__list" ref={listRef} onScroll={updateScrollState}>
         {categories.map((category) => (
@@ -76,7 +93,7 @@ export function CategoryScroller({
         disabled={!canScrollRight}
         onClick={() => scroll(1)}
       >
-        &gt;
+        <CategoryArrowIcon direction="right" />
       </button>
     </nav>
   );

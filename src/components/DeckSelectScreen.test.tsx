@@ -101,11 +101,7 @@ describe("DeckSelectScreen", () => {
 
     fireEvent.click(within(screen.getByRole("navigation", { name: "Deck categories" })).getByRole("button", { name: "All" }));
     expect(screen.getByRole("button", { name: "Play Mixed Category" })).toBeVisible();
-    expect(screen.queryByText(/Mixed category shuffles cards/)).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Explain Play Mixed Category" }));
-
-    expect(screen.getByText(/Mixed category shuffles cards/)).toBeVisible();
-    expect(screen.getByText(/one bigger grab bag/)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Explain Play Mixed Category" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Mixed category combines visible built-in decks/)).toBeVisible();
   });
 });
