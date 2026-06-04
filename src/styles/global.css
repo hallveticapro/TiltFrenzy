@@ -1028,6 +1028,7 @@ kbd {
   margin: 0;
   overflow-wrap: anywhere;
   font-size: clamp(2rem, min(11vw, 15vh), 7.8rem);
+  letter-spacing: 0;
   line-height: 0.98;
 }
 

@@ -50,6 +50,15 @@ docker compose build
 npm run verify:container
 ```
 
+Live deployment drift check:
+
+```bash
+npm run audit:production
+```
+
+This checks public headers, `/healthz`, metadata, and `/sw.js` cache behavior. It may fail
+when CDN/reverse-proxy settings still need manual updates outside the repository.
+
 Useful inspection commands:
 
 ```bash
@@ -69,6 +78,8 @@ No required local `.env` file was found during the 2026-06-04 audit.
 - `TILTED_SHARE_IMAGE_URL`: Docker runtime replacement for the default share image URL.
 
 Do not commit secrets. The app should continue to work without private environment values.
+Default social metadata points at `https://tilted.mrhallsclass.com`; forks and private
+self-hosted deployments should override the `VITE_*` or `TILTED_*` metadata values.
 
 ## Development Conventions
 
@@ -77,6 +88,8 @@ Do not commit secrets. The app should continue to work without private environme
 - Use `src/services/safeStorage.ts` for browser storage access instead of direct LocalStorage calls.
 - Keep custom-deck imports bounded and validated; do not trust pasted JSON, CSV, or shared URL fragments.
 - Preserve client-only privacy unless a future product decision explicitly adds a backend.
+- Keep saved round history anonymous by default; active team sessions may display names, but
+  persisted history should not keep team/player identifiers.
 - Avoid broad refactors during audit/doc passes.
 
 ## Testing and Validation
@@ -105,10 +118,10 @@ Manual device verification is still important for iOS Safari and Android Chrome 
 
 - React rendering avoids raw HTML; no `dangerouslySetInnerHTML` was found in source during the 2026-06-04 audit.
 - Custom decks, preferences, favorites, and round history are local to the browser origin.
-- Default history CSV export omits team/player names, but full round history currently persists team/player names locally when team mode uses them.
+- Saved round history strips team/player identifiers before writing to LocalStorage.
 - Shared deck links encode the whole deck in the URL fragment. They are not sent to the server as part of normal HTTP requests, but copied links can expose custom prompt content to recipients.
 - Nginx, Vercel, and Netlify-style headers include CSP, Permissions-Policy, Referrer-Policy, `X-Content-Type-Options`, and `X-Frame-Options`.
-- Production proxy/CDN rules should keep `index.html` and `sw.js` uncached or revalidated promptly.
+- Production proxy/CDN rules should keep `index.html` and `sw.js` uncached or revalidated promptly. Use `npm run audit:production` to check the live URL after deployment.
 
 ## Accessibility and Classroom UX Notes
 
@@ -117,13 +130,14 @@ Manual device verification is still important for iOS Safari and Android Chrome 
 - Category scrollers expose selected state with `aria-pressed`.
 - The About modal traps/restores focus and locks background scroll.
 - Reduced-motion CSS is present.
-- The largest remaining classroom usability risks are real-device motion behavior, projector readability for large prompts, and shared-device privacy around local history.
+- The largest remaining classroom usability risks are real-device motion behavior and projector readability on actual classroom hardware.
 
 ## Deployment Notes
 
 - `Dockerfile` builds static output with Node 22 and serves it from pinned unprivileged Nginx.
 - `docker-compose.yml` uses read-only root filesystem, `tmpfs` for `/tmp`, dropped capabilities, `no-new-privileges`, and restart policy `unless-stopped`.
 - `deploy/40-runtime-metadata.sh` copies immutable build output into `/tmp/tilted-html` and replaces default social metadata at container startup.
+- `scripts/stamp-service-worker.mjs` stamps `dist/sw.js` with a hash of the built app shell during `npm run build`.
 - `.github/workflows/ci.yml` verifies pull requests and pushes to `main`.
 - `.github/workflows/publish-container.yml` repeats app verification before publishing multi-arch GHCR images.
 - The 2026-06-04 production check confirmed `https://tilted.mrhallsclass.com/healthz` returns `ok` and root responses include security headers.
@@ -132,7 +146,6 @@ Manual device verification is still important for iOS Safari and Android Chrome 
 
 Prefer features that reduce teacher workload, avoid student-data collection, improve classroom reliability, or make local play smoother. Good candidates from the 2026-06-04 audit:
 
-- Privacy-first team history controls.
 - QR or shorter deck-sharing flow with clear content visibility warnings.
 - Browser-level smoke tests for the main quick-round and deck-editor paths.
 - Teacher session presets or reusable review collections.
@@ -141,11 +154,10 @@ Prefer features that reduce teacher workload, avoid student-data collection, imp
 ## Known Risks and Follow-Up Items
 
 - Production `sw.js` was observed with `Cache-Control: max-age=14400` on 2026-06-04, despite the repo Nginx config intending no-cache behavior.
-- Production social metadata was observed pointing at GitHub defaults rather than `https://tilted.mrhallsclass.com`.
+- Production social metadata defaults have been fixed in the repo; redeploy and verify with `npm run audit:production`.
 - Production HSTS includes `includeSubDomains; preload`; confirm that is intentional for the whole domain.
-- Team/player names can persist in LocalStorage round history on shared devices.
-- Global `h1` negative letter spacing may reduce readability for game prompts on projectors.
-- Service worker cache versioning is manual.
+- Shared deck URLs contain the full deck content in the copied URL fragment.
+- Real-device motion/PWA behavior and projector readability still need manual classroom-device testing.
 
 ## Instructions for Future Agents
 

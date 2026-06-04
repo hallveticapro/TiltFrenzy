@@ -498,6 +498,10 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                     Delete Deck
                   </button>
                 </div>
+                <p className="muted share-message">
+                  Share links include the full deck content. Only share classroom decks with
+                  people who should be able to see every prompt and hint.
+                </p>
                 {shareMessage && <p className="muted share-message">{shareMessage}</p>}
               </section>
               <section className="stack">

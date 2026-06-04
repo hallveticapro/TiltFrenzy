@@ -1,4 +1,4 @@
-const CACHE_NAME = "tilted-shell-v3";
+const CACHE_NAME = "tilted-shell-__CACHE_VERSION__";
 const SHELL_ASSETS = [
   "./",
   "./index.html",

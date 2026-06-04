@@ -1,5 +1,89 @@
 # Updates
 
+## 2026-06-04 - Implement local audit recommendations
+
+### Summary
+
+Implemented the audit items that could be completed locally in the repository. The changes keep Tilted client-only, preserve privacy defaults, improve deployment metadata defaults, automate service-worker cache naming, add a live production audit script, and document the remaining deployment-layer work that requires Cloudflare/reverse-proxy/domain access.
+
+### Files Created
+
+- `scripts/check-production.mjs`
+- `scripts/stamp-service-worker.mjs`
+
+### Files Updated
+
+- `README.md`
+- `AGENTS.md`
+- `UPDATES.md`
+- `package.json`
+- `vite.config.ts`
+- `deploy/40-runtime-metadata.sh`
+- `public/_headers`
+- `public/sw.js`
+- `vercel.json`
+- `scripts/verify-static.mjs`
+- `src/components/DeckEditor.tsx`
+- `src/services/roundHistory.ts`
+- `src/services/roundHistory.test.ts`
+- `src/styles/global.css`
+
+### Commands Run
+
+| Command | Result | Notes |
+| ------- | ------ | ----- |
+| `git status --short --branch` | Pass | Started clean on `main...origin/main`. |
+| `npm ci` | Pass | Installed dependencies; 0 vulnerabilities reported. |
+| `npm run typecheck` | Pass | Passed after rerun. The first parallel attempt raced with `npm ci` replacing `node_modules`. |
+| `npm test -- --run` | Pass | 16 test files and 54 tests passed. |
+| `npm test -- --run src/services/roundHistory.test.ts` | Pass | Targeted privacy-history regression test passed. |
+| `npm run build` | Pass | Vite build passed and stamped `dist/sw.js` with cache `204bed1859c1`. |
+| `npm run verify:static` | Pass | Verified headers, metadata, stamped service worker, and unresolved placeholders. |
+| `npm audit --omit=dev --audit-level=moderate` | Pass | 0 vulnerabilities. |
+| `npm audit` | Pass | 0 vulnerabilities. |
+| `docker compose config` | Pass | Compose config resolved successfully. |
+| `docker build -t tilted-audit-verify .` | Pass | Fresh image built with stamped service worker. |
+| `docker compose build` | Pass | Compose image build completed. |
+| `npm run verify:container` | Pass | Passed after fixing runtime metadata replacement order. |
+| `npm run audit:production` | Expected fail | Live deployment still has GitHub-default metadata and `/sw.js` cache `max-age=14400`; HSTS preload warning remains. These require deployment/proxy changes or a redeploy outside the local repo. |
+
+### Changes Made
+
+- Implemented privacy-first saved history: team/player identifiers are stripped before writing round history to LocalStorage, and older stored history is sanitized on load.
+- Added regression coverage proving saved history does not retain team/player identifiers while explicit in-memory CSV export can still include names when requested by code.
+- Changed default build-time and Docker runtime social metadata from GitHub URLs to `https://tilted.mrhallsclass.com`.
+- Fixed Docker runtime metadata replacement order so custom `TILTED_SHARE_IMAGE_URL` is honored even when it shares the public URL prefix.
+- Added `scripts/stamp-service-worker.mjs` and wired it into `npm run build` so the service-worker cache name is generated from the built app shell.
+- Updated static-host/Vercel `/sw.js` cache headers to `no-cache, must-revalidate`.
+- Added `scripts/check-production.mjs` and `npm run audit:production` for repeatable live checks of headers, metadata, `/healthz`, and `/sw.js` caching.
+- Added deck-editor copy warning that share links contain the full deck content.
+- Set game-card prompt letter spacing to `0` for better classroom/projector readability.
+- Updated README and AGENTS documentation for privacy behavior, service-worker stamping, production metadata defaults, and live deployment checks.
+
+### Audit Items Implemented
+
+- `MED-002`: Team/player names no longer persist in saved round history.
+- `MED-003`: Repository defaults now point social metadata at the production Tilted URL and hosted cover image.
+- `LOW-001`: Game prompts no longer inherit negative global heading letter spacing.
+- `LOW-002`: Service-worker cache revisioning is now generated during build from shell asset content.
+- `LOW-003`: Deck sharing now displays a warning that shared URLs include full deck content.
+- `FUNC-001`: Privacy-first team history behavior implemented.
+- `FUNC-002`: Production deployment audit command added.
+
+### Audit Items Deferred
+
+- `MED-001`: Live production `/sw.js` is still cached with `Cache-Control: max-age=14400`. Reason: fixing the observed live header requires Cloudflare, CDN, reverse-proxy, or server deployment access. Recommended manual next step: update the proxy/CDN rule for `/sw.js` to no-cache or must-revalidate, redeploy if needed, then run `npm run audit:production`.
+- `MED-004`: Production HSTS includes `includeSubDomains; preload`. Reason: confirming or changing this requires domain/reverse-proxy ownership decisions outside the repository. Recommended manual next step: confirm every relevant `mrhallsclass.com` subdomain is permanently HTTPS-ready, or remove `preload`/`includeSubDomains` at the TLS-terminating layer.
+- Real-device motion, installed-PWA update behavior, and projector/smartboard readability remain deferred because they require manual classroom-device testing.
+
+### Follow-Up Needed
+
+- Redeploy Tilted so production picks up the new default social metadata and runtime replacement fix.
+- Update the production proxy/CDN cache rule for `/sw.js`.
+- Confirm the domain-wide HSTS preload decision.
+- Run `npm run audit:production` after deployment/proxy changes.
+- Add browser-level smoke tests in a later pass if desired.
+
 ## 2026-06-04 - Initial repository audit and agent documentation
 
 ### Summary

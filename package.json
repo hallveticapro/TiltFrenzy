@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/stamp-service-worker.mjs",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:static": "node scripts/verify-static.mjs",
-    "verify:container": "./scripts/verify-container.sh"
+    "verify:container": "./scripts/verify-container.sh",
+    "audit:production": "node scripts/check-production.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

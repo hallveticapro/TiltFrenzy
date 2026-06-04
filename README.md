@@ -55,7 +55,7 @@ Motion controls are optional. Touch buttons and keyboard shortcuts are always av
 - Fresh Fisher-Yates shuffle at the start of every round.
 - Local team games with optional player rosters, automatic turn rotation, and cumulative
   scoreboards.
-- Persistent recent-round history, deck best scores, and anonymous CSV exports.
+- Privacy-first recent-round history, deck best scores, and anonymous CSV exports.
 - Optional motion controls with forehead calibration and neutral-position rearming.
 - Motion sensitivity presets and an in-app diagnostic screen.
 - Portrait-orientation reminder before a round starts.
@@ -157,9 +157,9 @@ players within that team across turns. Choose a total number of rounds or an opt
 score, then pass the same phone between teams.
 
 Recent completed rounds stay in LocalStorage on that browser origin. **Round History** shows a
-compact local record and can export an anonymous CSV summary. The default export intentionally
-omits team and player names, which keeps classroom exports useful without turning Tilted into a
-student-data store.
+compact local record and can export an anonymous CSV summary. Tilted strips team and player
+identifiers before saving history, so names entered for the active team game are visible during
+that session but are not preserved in the browser's saved history.
 
 ## Deck Discovery and Round Filters
 
@@ -184,7 +184,8 @@ Available editor actions:
 - Import a full typed deck from JSON.
 - Export a deck as JSON or CSV and back up or restore the whole custom-deck library.
 - Share a deck through the native share sheet or a URL fragment that can be imported on a
-  second device without an account or server.
+  second device without an account or server. Share links include the full deck content, so
+  only share decks with recipients who should be able to see every prompt and hint.
 - Download a recovery backup if malformed saved content is detected.
 
 Custom-deck data stays in the browser and site URL that created it. Changing the hostname,
@@ -222,6 +223,16 @@ npm run verify:container
 That command builds the image, runs it with a read-only filesystem and dropped capabilities,
 checks `/healthz`, confirms the served security headers, and verifies runtime metadata
 injection.
+
+To audit the public deployment from your workstation:
+
+```bash
+npm run audit:production
+```
+
+That command checks the production URL, `/healthz`, security headers, Open Graph metadata, and
+the public `/sw.js` cache policy. It can fail when a CDN or reverse proxy is still overriding
+headers, which means the next fix belongs in the deployment layer rather than in app code.
 
 ## Static Hosting
 
@@ -312,6 +323,9 @@ The bundled Nginx configuration adds:
 
 If your reverse proxy also sets security headers, verify that it does not replace the
 container's policy with one that blocks service workers or device-orientation APIs.
+Also verify that the proxy or CDN does not cache `/sw.js`; it should be served with
+`Cache-Control: no-cache, must-revalidate` or an equivalent prompt-revalidation policy so
+installed browsers discover app updates quickly.
 
 After the HTTPS public hostname is stable and verified, configure HSTS at the TLS-terminating
 reverse proxy:
@@ -371,8 +385,9 @@ docker build \
 ```
 
 The Docker runtime variables take precedence over the image defaults. The defaults point to
-the canonical public repository assets so zero-configuration builds still produce a valid
-rich preview.
+the canonical public Tilted deployment at `https://tilted.mrhallsclass.com`; forks and private
+self-hosted instances should override them so shared links advertise the correct hostname and
+preview image.
 
 ## Install and Offline Support
 
@@ -382,9 +397,10 @@ the core interface and built-in deck bundle remain available during a temporary 
 
 On browsers that expose an install prompt, Tilted offers an **Install app** banner. On iPhone
 or iPad, tap Share and then **Add to Home Screen**. Tilted also displays an offline indicator
-and an update banner when a new service worker is ready. Cache revisions are bumped when the
-offline shell changes; keep `index.html` and `sw.js` uncached at the proxy so browsers can
-discover updates promptly.
+and an update banner when a new service worker is ready. The production build stamps the
+service-worker cache name from the built app shell, so cache revisions change when shell assets
+change; keep `index.html` and `sw.js` uncached at the proxy so browsers can discover updates
+promptly.
 
 ## Troubleshooting
 
@@ -425,7 +441,8 @@ curl http://127.0.0.1:8080/healthz
 
 - The deployed app is client-only and has no backend or account system.
 - Custom deck data stays in browser LocalStorage.
-- Team rosters and recent history stay in browser LocalStorage or in-memory session state.
+- Team rosters stay in memory during a team game; saved round history omits team and player
+  identifiers before writing to LocalStorage.
 - Anonymous CSV export is the default for round and history downloads.
 - React escapes rendered card content.
 - Imports are validated and size-limited before storage.

@@ -5,10 +5,9 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
-  const publicUrl = env.VITE_PUBLIC_URL || "https://github.com/hallveticapro/Tilted";
+  const publicUrl = env.VITE_PUBLIC_URL || "https://tilted.mrhallsclass.com";
   const shareImageUrl =
-    env.VITE_SHARE_IMAGE_URL ||
-    "https://raw.githubusercontent.com/hallveticapro/Tilted/main/public/assets/tilted-cover.png";
+    env.VITE_SHARE_IMAGE_URL || "https://tilted.mrhallsclass.com/assets/tilted-cover.png";
 
   return {
     base: "./",

@@ -23,20 +23,35 @@ function isRoundResult(value: unknown): value is RoundResult {
 }
 
 export function loadRoundHistory(storage?: Storage): RoundResult[] {
-  const stored = readStoredValue(getBrowserStorage(storage), ROUND_HISTORY_KEY);
+  const browserStorage = getBrowserStorage(storage);
+  const stored = readStoredValue(browserStorage, ROUND_HISTORY_KEY);
   if (!stored) {
     return [];
   }
   try {
     const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed.filter(isRoundResult).slice(0, MAX_HISTORY_ITEMS) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const history = parsed.filter(isRoundResult).map(sanitizeRoundForHistory).slice(0, MAX_HISTORY_ITEMS);
+    const serializedHistory = JSON.stringify(history);
+    if (serializedHistory !== stored) {
+      writeStoredValue(browserStorage, ROUND_HISTORY_KEY, serializedHistory);
+    }
+    return history;
   } catch {
     return [];
   }
 }
 
+export function sanitizeRoundForHistory(result: RoundResult): RoundResult {
+  const { teamId: _teamId, teamName: _teamName, playerName: _playerName, ...anonymousResult } = result;
+  return anonymousResult;
+}
+
 export function saveRoundHistory(history: RoundResult[], storage?: Storage): RoundResult[] {
-  const trimmed = history.slice(0, MAX_HISTORY_ITEMS);
+  const trimmed = history.map(sanitizeRoundForHistory).slice(0, MAX_HISTORY_ITEMS);
   writeStoredValue(getBrowserStorage(storage), ROUND_HISTORY_KEY, JSON.stringify(trimmed));
   return trimmed;
 }
